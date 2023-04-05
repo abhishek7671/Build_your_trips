@@ -39,7 +39,7 @@ SECRET_KEY = 'vqua1i2qh8&i!w&mfkeo^uex0v*(u)08x-x!q)ggv!+k94rxxy'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['7ddb-122-50-206-108.in.ngrok.io','127.0.0.1']
+ALLOWED_HOSTS = []
 
 
 # Application definition
@@ -55,11 +55,10 @@ INSTALLED_APPS = [
     'rest_framework.authtoken',
     # 'rest_framework_swagger',
     'drf_yasg',
-    # 'drf_api_logger',
-    'django_filters',
     'app',
     'apptrip',
-    # 'multi_email_field',
+    'django_filters',
+    
 ]
 
 MIDDLEWARE = [
@@ -70,7 +69,6 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    # 'drf_api_logger.middleware.api_logger_middleware.APILoggerMiddleware',
 ]
 
 
@@ -88,24 +86,18 @@ MIDDLEWARE = [
 
 REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': (
-        'rest_framework.permissions.IsAuthenticated',
+        # 'rest_framework.permissions.IsAuthenticated',
     ),
     'DEFAULT_AUTHENTICATION_CLASSES': (
         # 'rest_framework_jwt.authentication.JSONWebTokenAuthentication',
         'rest_framework_simplejwt.authentication.JWTAuthentication',
         'rest_framework.authentication.SessionAuthentication',
         'rest_framework.authentication.BasicAuthentication',
-        'rest_framework.authentication.TokenAuthentication',
     ),
- 
-    'DEFAULT_PARSER_CLASSES': [
-        'rest_framework.parsers.FormParser',
-        'rest_framework.parsers.MultiPartParser',
-        'rest_framework.parsers.JSONParser',
-    ]
 }
 
 AUTHENTICATION_BACKENDS = ('app.backend.EmailBackend', )
+
 
 ROOT_URLCONF = 'django_service.urls'
 
@@ -132,19 +124,23 @@ WSGI_APPLICATION = 'django_service.wsgi.application'
 # https://docs.djangoproject.com/en/3.0/ref/settings/#databases
 
 
-
-
-DATABASES = {
+DATABASES = DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'a',
-        'USER':'root',
-        'PASSWORD':'root',
-        'HOST':'localhost',
-        
-
+        'ENGINE': 'djongo',
+        'NAME': 'project',
     }
 }
+
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.mysql',
+#         'NAME': 'santhosh',
+#         'USER':'root',
+#         'PASSWORD':'root',
+#         'HOST':'localhost',
+#     }
+# }
+
 
 # Password validation
 # https://docs.djangoproject.com/en/3.0/ref/settings/#auth-password-validators
@@ -210,7 +206,7 @@ LOGGING = {
 # Internationalization
 # https://docs.djangoproject.com/en/3.0/topics/i18n/
 
-AUTH_USER_MODEL = 'app.User'
+
 
 LANGUAGE_CODE = 'en-us'
 
@@ -264,3 +260,4 @@ JWT_AUTH = {
     'JWT_AUTH_COOKIE': None,
 
 }
+
