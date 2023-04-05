@@ -1,7 +1,7 @@
 from django.urls import include, path
 from rest_framework import routers
 # from rest_framework_jwt.views import obtain_jwt_token, refresh_jwt_token, verify_jwt_token
-from .views import CreateUser, ProfileView, AuthenticateUser, ChangePassword, GetUserById, GetAllUsers
+from .views import  ProfileView, AuthenticateUser, ChangePassword, GetUserById, GetAllUsers,signup,LogoutView
 from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
 from rest_framework import permissions
@@ -23,8 +23,9 @@ schema_view = get_schema_view(
 
 
 urlpatterns = [
-    path(r'create_user/', CreateUser.as_view()),
-    path(r'authenticate_user/', AuthenticateUser.as_view()),
+    path(r'sign_up/', signup.as_view()),
+    path(r'Pass_checker/', AuthenticateUser.as_view()),
+    path(r'logout/', LogoutView.as_view()),
     path(r'changepassword/', ChangePassword.as_view()),
     path(r'getusers/', GetAllUsers.as_view()),
     path(r'getusersbyid/<int:pk>', GetUserById.as_view()),

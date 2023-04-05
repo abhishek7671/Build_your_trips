@@ -5,12 +5,20 @@ from django.contrib.auth import authenticate
 from .models import User
 
 
+# class UserSerializer(serializers.ModelSerializer):
+#     class Meta:
+#         model = User
+#         # fields = '__all__'
+#         fields = ['username', 'password', 'email', 'first_name', 'last_name', 'mobile']
+
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         # fields = '__all__'
-        fields = ['Name','Email','Password']
+        fields = [ 'username', 'email','password']
+     
 
+ 
 
 class LoginSerializer(serializers.Serializer):
     username = serializers.CharField(required=True, max_length=32)
