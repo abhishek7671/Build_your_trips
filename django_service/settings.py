@@ -127,7 +127,8 @@ WSGI_APPLICATION = 'django_service.wsgi.application'
 DATABASES = DATABASES = {
     'default': {
         'ENGINE': 'djongo',
-        'NAME': 'project',
+        'NAME': 'santhosh',
+        'ENFORCE_SCHEMA' : False,
     }
 }
 

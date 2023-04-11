@@ -3,6 +3,7 @@ from .serializers import Pserializer, FSerializer
 from rest_framework.generics import UpdateAPIView, ListAPIView,CreateAPIView,RetrieveAPIView, DestroyAPIView
 from .models import PastTravelledTrips, FutureTrips
 from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework.filters import SearchFilter
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.authentication import BasicAuthentication
 # from rest_framework.mixins import CreateModelMixin
@@ -20,6 +21,10 @@ from rest_framework.response import Response
 
 logger = logging.getLogger(__name__)
 
+from bson import ObjectId
+
+
+
 # this code is on class based views 
 
 class Ptrip(viewsets.ModelViewSet):
@@ -29,7 +34,23 @@ class Ptrip(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
     filter_backends = [DjangoFilterBackend]
     filterset_fields = ['Place_name']
+    
 
+
+
+# class GetView(ListAPIView):
+#     def get(self, request, _id=None , format=None):
+#         # import pdb;pdb.set_trace()
+#         if _id is not None:
+            
+
+#             trip=PastTravelledTrips.objects.get(_id=ObjectId(_id))
+
+#             serializer=Pserializer(trip)
+#             return Response(serializer.data)
+#         trip = PastTravelledTrips.objects.all()
+#         serializer = Pserializer(trip, many=True)
+#         return Response({'status': 200, 'payload': serializer.data})
 
 
 @api_view(['GET', 'POST', 'PUT', 'DELETE'])
@@ -109,12 +130,12 @@ class Ftrip1(viewsets.ModelViewSet):
     filterset_fields = ['Place_name']
 
 
-def create(self, request, *args, **kwargs):
-        serializer = FSerializer.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        FSerializer.perform_create(serializer)
-        done=FSerializer.get_success_headers(serializer.data)
-        return Response(serializer.data, status=status.HTTP_201_CREATED, done=done)
+# def create(self, request, *args, **kwargs):
+#         serializer = FSerializer.get_serializer(data=request.data)
+#         serializer.is_valid(raise_exception=True)
+#         FSerializer.perform_create(serializer)
+#         done=FSerializer.get_success_headers(serializer.data)
+#         return Response(serializer.data, status=status.HTTP_201_CREATED, done=done)
 
 
 # class Entry(mixins.ListModelMixin):
