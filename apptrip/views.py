@@ -3,7 +3,7 @@ from .serializers import Pserializer, FSerializer
 from rest_framework.generics import UpdateAPIView, ListAPIView,CreateAPIView,RetrieveAPIView, DestroyAPIView
 from .models import PastTravelledTrips, FutureTrips
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework.filters import SearchFilter
+# from rest_framework.filters import SearchFilter
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.authentication import BasicAuthentication
 # from rest_framework.mixins import CreateModelMixin
@@ -36,23 +36,19 @@ class Ptrip(viewsets.ModelViewSet):
     filterset_fields = ['Place_name']
     
 
-
-
-# class GetView(ListAPIView):
-#     def get(self, request, _id=None , format=None):
-#         # import pdb;pdb.set_trace()
-#         if _id is not None:
+class Abhi(APIView):
+    def get(self, request, _id=None , format=None):
+        
+        if _id is not None:
             
-
-#             trip=PastTravelledTrips.objects.get(_id=ObjectId(_id))
-
-#             serializer=Pserializer(trip)
-#             return Response(serializer.data)
-#         trip = PastTravelledTrips.objects.all()
-#         serializer = Pserializer(trip, many=True)
-#         return Response({'status': 200, 'payload': serializer.data})
-
-
+            trip=PastTravelledTrips.objects.get(_id=ObjectId(_id))
+            serializer=Pserializer(trip)
+            return Response(serializer.data)
+        trip = PastTravelledTrips.objects.all()
+        serializer = Pserializer(trip, many=True)
+        return Response({'status': 200, 'payload': serializer.data})
+    
+    
 @api_view(['GET', 'POST', 'PUT', 'DELETE'])
 def ptrip(request):
     logger.info('ptrip view function')

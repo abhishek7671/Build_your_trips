@@ -14,14 +14,12 @@ urlpatterns = [
     
 
     path('ptrip/',views.ptrip),
+    path('abhi/',views.Abhi.as_view()),
+    path('abhi/<str:_id>/',views.Abhi.as_view()),
+    # path('abhi',views.abhi),
     # path('get/<int:pk>',views.GetView.as_view()),
     # path('ptrip/<int:pk>',views.ptrip),
-    # path('ftrip',views.ftrip),
-    
-
-
-
-    # path('P1/<int:pk>',views.Ptrip1.as_view()),
+    path('P1/<int:pk>',views.Ptrip1.as_view()),
 
     # path('ft/',views.Ftrip.as_view()),
     # path('F/',views.FutureCreate.as_view()),
