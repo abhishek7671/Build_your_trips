@@ -58,6 +58,7 @@ INSTALLED_APPS = [
     'app',
     'apptrip',
     'django_filters',
+
     
 ]
 
@@ -93,6 +94,7 @@ REST_FRAMEWORK = {
         'rest_framework_simplejwt.authentication.JWTAuthentication',
         'rest_framework.authentication.SessionAuthentication',
         'rest_framework.authentication.BasicAuthentication',
+    
     ),
 }
 
@@ -135,7 +137,7 @@ DATABASES = DATABASES = {
 # DATABASES = {
 #     'default': {
 #         'ENGINE': 'django.db.backends.mysql',
-#         'NAME': 'santhosh',
+#         'NAME': 'users',
 #         'USER':'root',
 #         'PASSWORD':'root',
 #         'HOST':'localhost',
