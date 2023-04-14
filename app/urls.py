@@ -1,7 +1,7 @@
 from django.urls import include, path
 from rest_framework import routers
 # from rest_framework_jwt.views import obtain_jwt_token, refresh_jwt_token, verify_jwt_token
-from .views import  ProfileView, AuthenticateUser, ChangePassword, GetUserById, GetAllUsers,signup,LogoutView
+from .views import  ProfileView, AuthenticateUser,ChangePassword,GetAllUsers,GetUserById,signup,LogoutView
 from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
 from rest_framework import permissions

@@ -141,6 +141,7 @@ DATABASES = DATABASES = {
 #         'USER':'root',
 #         'PASSWORD':'root',
 #         'HOST':'localhost',
+#         'ENFORCE_SCHEMA' : False,
 #     }
 # }
 

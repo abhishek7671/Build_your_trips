@@ -37,6 +37,7 @@ class signup(APIView):
         data = serializer.initial_data
         password = data.get("password")
         password= encrypt(bytes(password, "utf-8"), SECRET_KEY.encode()).decode()
+        print(password)
         data["password"] = password
         if serializer.is_valid():
             serializer.save()
@@ -95,10 +96,10 @@ class AuthenticateUser(APIView): # Ganesh Upadted code
                     user = authenticate(username=data["username"], password=password_1)
                     token, created = Token.objects.get_or_create(user=user)
 
-                return JsonResponse({"status": "success", "msg": "user successfully authenticated", "token": token.key})
+                return JsonResponse({"status": "success", "msg": "user successfully authenticated", "msg1":"log_in the previous page","token": token.key})
         else:
             return JsonResponse({"status": "error", "msg": "incorrect username or password"})
-#__________________________________________________________________________________________________________________________________________________
+# #__________________________________________________________________________________________________________________________________________________
  
 class ChangePassword(APIView): #Ganesh
 
@@ -138,14 +139,13 @@ class LogoutView(APIView):#Ganesh
     def post(self, request):
         refresh_token = {'token':"U2FsdGVkX19/FxRrKmASgQw3j83WES5jj5xtOvSgmzc="}
         if not refresh_token:
-            return Response({"error": "Refresh token is required"}, status=status.HTTP_400_BAD_REQUEST)
-
+            return Response({"msg": "Refresh token is required"}, status=status.HTTP_400_BAD_REQUEST)
         try:
             token = RefreshToken(refresh_token)
             token.blacklist()
             return Response(status=status.HTTP_205_RESET_CONTENT)
         except Exception as e:
-            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"msg": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
  
 
@@ -174,12 +174,13 @@ class GetUserById(APIView):
 
 
 class ProfileView(APIView):
-    permission_classes = (IsAuthenticated, )
+    permission_classes = (IsAuthenticated,)
 
     def get(self, request, format=None):
         data = dict()
         data['username'] = request.user.username
         data['email'] = request.user.email
         data['user_id'] = request.user.pk
+        data['token'] = request.auth.token if request.auth else None
         logger.info("User data %s", data)
         return Response(data)
