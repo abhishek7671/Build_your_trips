@@ -9,7 +9,7 @@ from django_service import settings
 from django.shortcuts import get_object_or_404, get_list_or_404, render
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework.permissions import IsAuthenticated, AllowAny, IsAdminUser, IsAuthenticatedOrReadOnly
 from .models import User
 from rest_framework_jwt.settings import api_settings
 from django.contrib.auth import authenticate
@@ -32,7 +32,7 @@ class signup(APIView):
         operation_id='Sign up',
         request_body=UserSerializer)
     def post(self,request,format=None):
-        # import pdb;pdb.set_trace()
+        # import pdb;pdb.set_trace
         serializer = UserSerializer(data=json.loads(request.body))
         data = serializer.initial_data
         password = data.get("password")
@@ -69,6 +69,13 @@ class signup(APIView):
 #             return JsonResponse({"status": "error", "msg": "incorrect username"})
 
 #___________________________________________________________________________________________________________________________________________
+from pymongo import MongoClient
+import datetime
+from rest_framework.authtoken.models import Token
+client = MongoClient('mongodb://localhost:27017')
+db =client['santhosh']
+mycol = db["token_db"]
+
 class AuthenticateUser(APIView): # Ganesh Upadted code
     @swagger_auto_schema(request_body=openapi.Schema(
         type=openapi.TYPE_OBJECT,
@@ -94,7 +101,12 @@ class AuthenticateUser(APIView): # Ganesh Upadted code
                 y=newpass_3.decode()
                 if  m == y:
                     user = authenticate(username=data["username"], password=password_1)
-                    token, created = Token.objects.get_or_create(user=user)
+                    token, created= Token.objects.get_or_create(user=user)
+                    mycol.insert_one({
+                        # "user_id": str(user.id),
+                        "token": token.key,
+                        "created_at": datetime.datetime.now()
+                        })
 
                 return JsonResponse({"status": "success", "msg": "user successfully authenticated", "msg1":"log_in the previous page","token": token.key})
         else:
@@ -139,13 +151,15 @@ class LogoutView(APIView):#Ganesh
     def post(self, request):
         refresh_token = {'token':"U2FsdGVkX19/FxRrKmASgQw3j83WES5jj5xtOvSgmzc="}
         if not refresh_token:
-            return Response({"msg": "Refresh token is required"}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"mes": "Refresh token is required"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        
         try:
             token = RefreshToken(refresh_token)
             token.blacklist()
             return Response(status=status.HTTP_205_RESET_CONTENT)
         except Exception as e:
-            return Response({"msg": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"mes": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
  
 
@@ -174,7 +188,7 @@ class GetUserById(APIView):
 
 
 class ProfileView(APIView):
-    permission_classes = (IsAuthenticated,)
+    permission_classes = (AllowAny,IsAuthenticated,IsAdminUser,IsAuthenticatedOrReadOnly )
 
     def get(self, request, format=None):
         data = dict()
@@ -184,3 +198,18 @@ class ProfileView(APIView):
         data['token'] = request.auth.token if request.auth else None
         logger.info("User data %s", data)
         return Response(data)
+
+
+@api_view(['GET'])
+def profile(request):
+    user = request.user  # Get logged-in user object
+    if user.is_authenticated:  # Check if user is authenticated
+        user_data = {
+            'username': user.username,
+            'email': user.email,
+        
+            # Add other user data fields as needed
+        }
+        return Response(user_data)
+    else:
+        return Response({'message': 'User not authenticated'})
