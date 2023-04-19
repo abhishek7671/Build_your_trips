@@ -4,9 +4,11 @@ from rest_framework.generics import UpdateAPIView, ListAPIView,CreateAPIView,Ret
 from .models import PastTravelledTrips, FutureTrips
 from django_filters.rest_framework import DjangoFilterBackend
 # from rest_framework.filters import SearchFilter
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.authentication import BasicAuthentication
+# from rest_framework_simplejwt.authentication import JWTAuthentication
 # from rest_framework.mixins import CreateModelMixin
+# from rest_framework.authentication import SessionAuthentication,BasicAuthentication,RemoteUserAuthentication, TokenAuthentication
 from rest_framework.decorators import api_view
 # from rest_framework import generics
 from django.contrib import messages

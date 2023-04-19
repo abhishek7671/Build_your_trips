@@ -27,7 +27,7 @@ from rest_framework import permissions
 logger = logging.getLogger("django_service.service.views")
 
 SECRET_KEY='1234567'
-class signup(APIView):
+class Signup(APIView):
     @swagger_auto_schema(
         operation_id='Sign up',
         request_body=UserSerializer)
@@ -43,6 +43,34 @@ class signup(APIView):
             serializer.save()
         # User.objects.create_user(**data)
         return JsonResponse({"message": "user created successfully"}, status=status.HTTP_201_CREATED)
+
+
+
+#  modified code
+SECRET_KEY='1234567'   
+class Agent_sign_upView(APIView):
+    @swagger_auto_schema(
+        operation_id='Agent_sign_up View',
+        request_body=UserSerializer)
+    def post(self,request,format=None):
+        # import pdb;pdb.set_trace()
+        serializer = UserSerializer(data=json.loads(request.body))
+        data = serializer.initial_data
+        password = data.get("password")
+        password= encrypt(bytes(password, "utf-8"), SECRET_KEY.encode()).decode()
+        data["password"] = password
+        email=data.get("email")
+        existing_user = User.objects.filter(email=email).first()
+        if serializer.is_valid():
+            if existing_user is not None:
+                return JsonResponse({'Message':'Email alredy exists'})
+            else:
+                serializer.save()
+                return JsonResponse({'Message':'User created Sucessfully!'})
+        else:
+            return JsonResponse({'Message':'User not Created!!'})
+        
+
 
 # class AuthenticateUser(APIView):#Working man
 #     @swagger_auto_schema(request_body=openapi.Schema(
@@ -207,6 +235,9 @@ def profile(request):
         user_data = {
             'username': user.username,
             'email': user.email,
+            # 'used_id':user.user_id,
+            # 'token':user.token,
+
         
             # Add other user data fields as needed
         }
