@@ -1,11 +1,12 @@
 from django.urls import include, path
 from rest_framework import routers
 # from rest_framework_jwt.views import obtain_jwt_token, refresh_jwt_token, verify_jwt_token
-from .views import  ProfileView, AuthenticateUser, ChangePassword, GetUserById, GetAllUsers,signup,LogoutView
+from .views import   Signup,AuthenticateUser,ChangePassword,GetAllUsers,GetUserById,LogoutView,profile,ProfileView
 from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
 from rest_framework import permissions
-
+# ____
+# from rest_framework_simplejwt.views import TokenObtainPairView,TokenRefreshView,TokenVerifyView
 
 schema_view = get_schema_view(
    openapi.Info(
@@ -23,13 +24,15 @@ schema_view = get_schema_view(
 
 
 urlpatterns = [
-    path(r'sign_up/', signup.as_view()),
+   #  path(r'sign_up/', Agent_sign_upView.as_view()),
+    path(r'sign_up/', Signup.as_view()),
     path(r'Pass_checker/', AuthenticateUser.as_view()),
     path(r'logout/', LogoutView.as_view()),
-    path(r'changepassword/', ChangePassword.as_view()),
-    path(r'getusers/', GetAllUsers.as_view()),
-    path(r'getusersbyid/<int:pk>', GetUserById.as_view()),
+   #  path(r'changepassword/', ChangePassword.as_view()),
+   #  path(r'getusers/', GetAllUsers.as_view()),
+   #  path(r'getusersbyid/<int:pk>', GetUserById.as_view()),
     path(r'profile', ProfileView.as_view()),
+   #  path('pro', profile),
     path(r'swagger/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
     path(r'redoc/', schema_view.with_ui('redoc', cache_timeout=0), name='schema-redoc'),
 
@@ -37,4 +40,9 @@ urlpatterns = [
     # path(r'api-token-refresh/', refresh_jwt_token),
     # path(r'api-token-verify/', verify_jwt_token)
 
+
+
+   #  path('gettoken/',TokenObtainPairView.as_view(), name='tokenobtain'), 
+   #  path('refreshtoken/',TokenRefreshView.as_view()),
+   #  path('verifytoken/',TokenVerifyView.as_view()),
 ]

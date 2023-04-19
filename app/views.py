@@ -9,7 +9,7 @@ from django_service import settings
 from django.shortcuts import get_object_or_404, get_list_or_404, render
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework.permissions import IsAuthenticated, AllowAny, IsAdminUser, IsAuthenticatedOrReadOnly
 from .models import User
 from rest_framework_jwt.settings import api_settings
 from django.contrib.auth import authenticate
@@ -27,9 +27,30 @@ from rest_framework import permissions
 logger = logging.getLogger("django_service.service.views")
 
 SECRET_KEY='1234567'
-class signup(APIView):
+class Signup(APIView):
     @swagger_auto_schema(
         operation_id='Sign up',
+        request_body=UserSerializer)
+    def post(self,request,format=None):
+        # import pdb;pdb.set_trace
+        serializer = UserSerializer(data=json.loads(request.body))
+        data = serializer.initial_data
+        password = data.get("password")
+        password= encrypt(bytes(password, "utf-8"), SECRET_KEY.encode()).decode()
+        print(password)
+        data["password"] = password
+        if serializer.is_valid():
+            serializer.save()
+        # User.objects.create_user(**data)
+        return JsonResponse({"message": "user created successfully"}, status=status.HTTP_201_CREATED)
+
+
+
+#  modified code
+SECRET_KEY='1234567'   
+class Agent_sign_upView(APIView):
+    @swagger_auto_schema(
+        operation_id='Agent_sign_up View',
         request_body=UserSerializer)
     def post(self,request,format=None):
         # import pdb;pdb.set_trace()
@@ -38,10 +59,18 @@ class signup(APIView):
         password = data.get("password")
         password= encrypt(bytes(password, "utf-8"), SECRET_KEY.encode()).decode()
         data["password"] = password
+        email=data.get("email")
+        existing_user = User.objects.filter(email=email).first()
         if serializer.is_valid():
-            serializer.save()
-        # User.objects.create_user(**data)
-        return JsonResponse({"message": "user created successfully"}, status=status.HTTP_201_CREATED)
+            if existing_user is not None:
+                return JsonResponse({'Message':'Email alredy exists'})
+            else:
+                serializer.save()
+                return JsonResponse({'Message':'User created Sucessfully!'})
+        else:
+            return JsonResponse({'Message':'User not Created!!'})
+        
+
 
 # class AuthenticateUser(APIView):#Working man
 #     @swagger_auto_schema(request_body=openapi.Schema(
@@ -68,6 +97,13 @@ class signup(APIView):
 #             return JsonResponse({"status": "error", "msg": "incorrect username"})
 
 #___________________________________________________________________________________________________________________________________________
+from pymongo import MongoClient
+import datetime
+from rest_framework.authtoken.models import Token
+client = MongoClient('mongodb://localhost:27017')
+db =client['santhosh']
+mycol = db["token_db"]
+
 class AuthenticateUser(APIView): # Ganesh Upadted code
     @swagger_auto_schema(request_body=openapi.Schema(
         type=openapi.TYPE_OBJECT,
@@ -93,12 +129,17 @@ class AuthenticateUser(APIView): # Ganesh Upadted code
                 y=newpass_3.decode()
                 if  m == y:
                     user = authenticate(username=data["username"], password=password_1)
-                    token, created = Token.objects.get_or_create(user=user)
+                    token, created= Token.objects.get_or_create(user=user)
+                    mycol.insert_one({
+                        # "user_id": str(user.id),
+                        "token": token.key,
+                        "created_at": datetime.datetime.now()
+                        })
 
-                return JsonResponse({"status": "success", "msg": "user successfully authenticated", "token": token.key})
+                return JsonResponse({"status": "success", "msg": "user successfully authenticated", "msg1":"log_in the previous page","token": token.key})
         else:
             return JsonResponse({"status": "error", "msg": "incorrect username or password"})
-#__________________________________________________________________________________________________________________________________________________
+# #__________________________________________________________________________________________________________________________________________________
  
 class ChangePassword(APIView): #Ganesh
 
@@ -138,14 +179,15 @@ class LogoutView(APIView):#Ganesh
     def post(self, request):
         refresh_token = {'token':"U2FsdGVkX19/FxRrKmASgQw3j83WES5jj5xtOvSgmzc="}
         if not refresh_token:
-            return Response({"error": "Refresh token is required"}, status=status.HTTP_400_BAD_REQUEST)
-
+            return Response({"mes": "Refresh token is required"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        
         try:
             token = RefreshToken(refresh_token)
             token.blacklist()
             return Response(status=status.HTTP_205_RESET_CONTENT)
         except Exception as e:
-            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"mes": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
  
 
@@ -174,12 +216,31 @@ class GetUserById(APIView):
 
 
 class ProfileView(APIView):
-    permission_classes = (IsAuthenticated, )
+    permission_classes = (AllowAny,IsAuthenticated,IsAdminUser,IsAuthenticatedOrReadOnly )
 
     def get(self, request, format=None):
         data = dict()
         data['username'] = request.user.username
         data['email'] = request.user.email
         data['user_id'] = request.user.pk
+        data['token'] = request.auth.token if request.auth else None
         logger.info("User data %s", data)
         return Response(data)
+
+
+@api_view(['GET'])
+def profile(request):
+    user = request.user  # Get logged-in user object
+    if user.is_authenticated:  # Check if user is authenticated
+        user_data = {
+            'username': user.username,
+            'email': user.email,
+            # 'used_id':user.user_id,
+            # 'token':user.token,
+
+        
+            # Add other user data fields as needed
+        }
+        return Response(user_data)
+    else:
+        return Response({'message': 'User not authenticated'})

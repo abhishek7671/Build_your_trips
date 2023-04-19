@@ -15,7 +15,7 @@ class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         # fields = '__all__'
-        fields = [ 'username', 'email','password']
+        fields = [ 'email','password']
      
 
  
@@ -42,3 +42,22 @@ class LoginSerializer(serializers.Serializer):
             msg = "User name and password not empty"
             raise exceptions.ValidationError(msg)
         return data
+    
+
+
+# class UserDataSerializer(serializers.Serializer):
+#     username = serializers.CharField()
+#     email = serializers.EmailField()
+#     # Add other user data fields as needed
+
+#     def to_representation(self, instance):
+#         user = self.context['request'].user  # Get logged-in user object
+#         if user.is_authenticated:  # Check if user is authenticated
+#             user_data = {
+#                 'username': user.username,
+#                 'email': user.email,
+#                 # Add other user data fields as needed
+#             }
+#             return user_data
+#         else:
+#             return {'message': 'User not authenticated'}
