@@ -15,7 +15,7 @@ class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         # fields = '__all__'
-        fields = [ 'email','password']
+        fields = [ 'username','email','password']
      
 
  
@@ -61,3 +61,41 @@ class LoginSerializer(serializers.Serializer):
 #             return user_data
 #         else:
 #             return {'message': 'User not authenticated'}
+
+
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+from rest_framework_simplejwt.settings import api_settings
+from rest_framework_simplejwt.serializers import update_last_login
+from pymongo import MongoClient
+client = MongoClient('mongodb://localhost:27017')
+db = client['santhosh']
+mycol = db["token_db"]
+
+#-------------------------------------------------------------------------------------------------------------------------------------------------
+class CustomTokenObtainPairSerializer(TokenObtainPairSerializer): # for access and refresh tokens generating
+    """
+    Override default TokenObtainPairSerializer to use email as username field.
+    """
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        # Override default username field to use email
+        self.fields['username'] = serializers.EmailField()
+
+    def validate(self, attrs):
+        # Use email to get user instance
+        data = super().validate(attrs)
+
+        refresh = self.get_token(self.user)
+
+        data["refresh"] = str(refresh)
+        data["access"] = str(refresh.access_token)
+        mycol.insert_one({
+                      "token": data,
+                     })
+
+        if api_settings.UPDATE_LAST_LOGIN:
+            update_last_login(None, self.user)
+
+        return data
+
