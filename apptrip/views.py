@@ -32,8 +32,8 @@ from bson import ObjectId
 class Ptrip(ListAPIView,CreateAPIView):
     queryset = PastTravelledTrips.objects.all()
     serializer_class = Pserializer
-    authentication_classes = [BasicAuthentication]
-    permission_classes = [IsAuthenticated]
+    # authentication_classes = [BasicAuthentication]
+    # permission_classes = [IsAuthenticated]
     
 
 class Past(APIView):
@@ -101,8 +101,8 @@ class Past(APIView):
 class Ftrip(ListAPIView,CreateAPIView):
     queryset = FutureTrips.objects.all()
     serializer_class = FSerializer
-    authentication_classes = [BasicAuthentication]
-    permission_classes = [IsAuthenticated]
+    # authentication_classes = [BasicAuthentication]
+    # permission_classes = [IsAuthenticated]
     # filter_backends = [DjangoFilterBackend]
     # filterset_fields = ['Place_name']
 
