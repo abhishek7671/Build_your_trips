@@ -1,6 +1,7 @@
 from django.shortcuts import render,redirect
 from .serializers import Pserializer, FSerializer
-from rest_framework.generics import UpdateAPIView, ListAPIView,CreateAPIView,RetrieveAPIView, DestroyAPIView
+from rest_framework import generics
+from rest_framework.generics import ListAPIView, CreateAPIView
 from .models import PastTravelledTrips, FutureTrips
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.permissions import IsAuthenticated, AllowAny
@@ -29,9 +30,10 @@ from bson import ObjectId
 
 # this code is on class based views 
 # 
-class Ptrip(ListAPIView,CreateAPIView):
+class Ptrip(generics.ListAPIView,generics.CreateAPIView):
     queryset = PastTravelledTrips.objects.all()
     serializer_class = Pserializer
+    # lookup_field = 'pk'
     # authentication_classes = [BasicAuthentication]
     # permission_classes = [IsAuthenticated]
     

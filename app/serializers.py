@@ -5,17 +5,17 @@ from django.contrib.auth import authenticate
 from .models import User
 
 
-# class UserSerializer(serializers.ModelSerializer):
-#     class Meta:
-#         model = User
-#         # fields = '__all__'
-#         fields = ['username', 'password', 'email', 'first_name', 'last_name', 'mobile']
-
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         # fields = '__all__'
-        fields = [ 'username','email','password']
+        fields = ['username', 'password', 'email']
+
+# class AgentSerializer(serializers.ModelSerializer):
+#     class Meta:
+#         model = User
+#         # fields = '__all__'
+#         fields = [ 'username','email','password', 'aadhar','driving_licence','phone']
      
 
  

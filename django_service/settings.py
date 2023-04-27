@@ -53,6 +53,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework',
     'rest_framework.authtoken',
+    # 'rest_framework_simplejwt.token_blacklist',
     # 'rest_framework_swagger',
     'drf_yasg',
     'app',
@@ -85,7 +86,7 @@ MIDDLEWARE = [
 #     ),
 # }
 
- 
+# GDAL_LIBRARY_PATH = 'D:/usr/lib/libgdal.so.20'
 
 AUTHENTICATION_BACKENDS = ('app.backend.EmailBackend', )
 
@@ -217,7 +218,8 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 
-
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+MEDIA_URL = '/media/'
 # JWT_AUTH = {
 #     'JWT_ENCODE_HANDLER':
 #     'rest_framework_jwt.utils.jwt_encode_handler',
@@ -306,3 +308,33 @@ REST_FRAMEWORK = {
     )
 
 }
+
+REST_FRAMEWORK = {
+    
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+    
+    'app.authentication.JWTAuthentication',
+
+ )
+
+
+
+
+}
+
+
+SWAGGER_SETTINGS = {
+    'USE_SESSION_AUTH': False,
+    'SECURITY_DEFINITIONS': {
+    'Bearer': {
+    'type': 'apiKey',
+    'name': 'Authorization',
+    'in': 'header'
+    }
+}
+
+}
+
+LOGIN_REDIRECT_URL='swagger'
+
+LOGOUT_REDIRECT_URL='swagger'

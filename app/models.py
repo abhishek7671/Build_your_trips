@@ -7,4 +7,5 @@ class User(AbstractUser):
     email = models.EmailField(max_length=70,blank=True,unique=True)
     password=models.CharField(default=None, max_length=180)
     # mobile = models.CharField(default=None, max_length=15, blank=True, null=True)
+    
 

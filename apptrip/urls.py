@@ -10,6 +10,7 @@ urlpatterns = [
 
     
     path('p/',views.Ptrip.as_view()),
+    # path('p/<int:pk>',views.Ptrip.as_view()),
     
     
     path('past/',views.Past.as_view(),),
