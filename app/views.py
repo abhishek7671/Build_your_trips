@@ -1,7 +1,8 @@
 import json
 import logging
+import jwt
 from django.contrib.auth.models import User, Group
-from app.serializers import UserSerializer
+from app.serializers import UserSerializer, USER_Serializer
 from django.views import View
 from django.http import JsonResponse
 from rest_framework import status
@@ -10,7 +11,7 @@ from django.shortcuts import get_object_or_404, get_list_or_404, render
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, AllowAny, IsAdminUser, IsAuthenticatedOrReadOnly
-from .models import User
+from .models import User,USER_details
 from rest_framework_jwt.settings import api_settings
 from django.contrib.auth import authenticate
 from django.db.models import Q
@@ -21,51 +22,70 @@ from django.http import HttpResponse
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.authtoken.models import Token
-from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework import permissions
-
-from .serializers import CustomTokenObtainPairSerializer
-from rest_framework_simplejwt.views import TokenObtainPairView
+from django.contrib.auth.hashers import make_password
+from .backends import EmailBackend
+from datetime import datetime, timedelta
+from rest_framework.exceptions import AuthenticationFailed
+from bson import ObjectId
+from .permissions import CustomIsauthenticated
+JWT_SECRET_KEY = 'vqua1i2qh8&i!w&mfkeo^uex0v*(u)08x-x!q)ggv!+k94rxxy'
+JWT_ACCESS_TOKEN_EXPIRATION = 60
+JWT_REFRESH_TOKEN_EXPIRATION = 1440
+JWT_ALGORITHM = 'HS256'
 
 logger = logging.getLogger("django_service.service.views")
 
-SECRET_KEY='1234567'
-class CreateUser(APIView):
-
-    @swagger_auto_schema(
-        operation_id='Create User',
-        request_body=UserSerializer)
+class Register(APIView):
     def post(self, request, format=None):
-        """
-                API endpoint that create the user.
-        """
-        serializer = UserSerializer(data=json.loads(request.body))
-        if not serializer.is_valid():
-            logger.info("Info: %s",str(serializer.errors))
-            return JsonResponse(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-        data = serializer.initial_data
-        try:
-            if User.objects.filter(email=data.get('email')) :
-                logger.info("Email and Username Already Exists")
-                return JsonResponse({"message": "email already exists"},
-                                    status=status.HTTP_400_BAD_REQUEST)
-            User.objects.create_user(**data)
-            logger.info("User created Successfully")
-            return JsonResponse({"message": "user created successfully"}, status=status.HTTP_201_CREATED)
-        except Exception as e:
-            logger.exception("Exception while connect to DB %s", e)
-            return JsonResponse({"message": "DB connection error"},
-                                status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        serializer = USER_Serializer(data=json.loads(request.body))
+        if serializer.is_valid():
+            data = serializer.validated_data
+            password = data['password']
+            hased_password = make_password(password)
+            email = data['email']
+            existing_user = USER_details.objects.filter(email=email).first()
+            if existing_user is not None:
+                return JsonResponse({'Message': 'Email already exists'}, status=status.HTTP_400_BAD_REQUEST)
+            else:
+                serializer.save(password=hased_password)
+                return JsonResponse({'Message': 'User created successfully'}, status=status.HTTP_201_CREATED)
+        else:
+            return JsonResponse({'Message': 'User not created'}, status=status.HTTP_400_BAD_REQUEST)
 
 
 
 
 
-class CustomTokenObtainPairView(TokenObtainPairView): # perfect 
-    """
-    Override default TokenObtainPairView to use custom token serializer.
-    """
-    serializer_class = CustomTokenObtainPairSerializer
+class LoginView(APIView):
+    def post(self,request):
+        data = request.data
+        email = data.get('email',None)
+        password = data.get('password',None)
+        user=EmailBackend.authenticate(self, request, username=email, password=password)
+        if user is not None:
+            token_payload = {
+                'user_id': str(user._id),
+                'exp': datetime.utcnow() + timedelta(minutes=JWT_ACCESS_TOKEN_EXPIRATION)
+                }
+            # print(user._id)
+            access_token = jwt.encode(token_payload, JWT_SECRET_KEY, JWT_ALGORITHM)
+
+            refresh_token_payload = {
+                'user_id': str(user._id),
+                'exp': datetime.utcnow() + timedelta(days=JWT_REFRESH_TOKEN_EXPIRATION)
+                }
+            refresh_token = jwt.encode(refresh_token_payload, JWT_SECRET_KEY, JWT_ALGORITHM)
+
+            return JsonResponse({
+                    "status": "success",
+                    "msg": "user successfully authenticated",
+                    "token": access_token,
+                    "refresh_token": refresh_token
+                })
+        else:
+            return JsonResponse({"message":"invalid data"})
+
 
 
 
