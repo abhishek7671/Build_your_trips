@@ -3,7 +3,7 @@ from .serializers import Pserializer, FSerializer
 from rest_framework.generics import UpdateAPIView, ListAPIView,CreateAPIView,RetrieveAPIView, DestroyAPIView
 from .models import PastTravelledTrips, FutureTrips
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework.permissions import IsAuthenticated, AllowAny
+from app.permissions import CustomIsauthenticated
 from rest_framework.authentication import BasicAuthentication
 # from rest_framework.filters import SearchFilter
 # from rest_framework_simplejwt.authentication import JWTAuthentication
