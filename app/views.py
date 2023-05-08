@@ -37,7 +37,7 @@ class Register(APIView):
                 return JsonResponse({'Message': 'User created successfully'}, status=status.HTTP_201_CREATED)
         else:
             return JsonResponse({'Message': 'User not created'}, status=status.HTTP_400_BAD_REQUEST)
-        
+  
 class LoginView(APIView):
     def post(self,request):
         data = request.data
@@ -86,26 +86,4 @@ class ChangePassword(CreateAPIView):
         user_obj.password=make_password(newpassword)
         user_obj.save()
         return Response({'success': 'Password changed successfully'}, status=status.HTTP_200_OK)
-
-# class ChangePassword(APIView):
-#     @swagger_auto_schema(request_body=openapi.Schema(
-#         type=openapi.TYPE_OBJECT,
-#         properties={
-#             'username': openapi.Schema(type=openapi.TYPE_STRING, description='username or email'),
-#             'oldpassword': openapi.Schema(type=openapi.TYPE_STRING, description='Type old password'),
-#             'newpassword': openapi.Schema(type=openapi.TYPE_STRING, description='Type new password')
-#         }
-#     ))
-#     def post(self, request, format=None):
-#         data = json.loads(request.body)
-       
-#         app = USER_details.objects.get(username__iexact=data["username"])
-#         valid = app.old_password(data['oldpassword'])
-#         if not valid:
-#             return JsonResponse({"message": "Old Password not match."}, status=status.HTTP_400_BAD_REQUEST)
-#         app.set_password(data["newpassword"])
-#         app.save()
-#         return JsonResponse({"message": "user password updated successfully"})
-        
-        
 

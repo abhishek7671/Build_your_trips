@@ -1,6 +1,7 @@
 from rest_framework import  serializers
 from rest_framework import exceptions
 from django.contrib.auth import authenticate
+
 from .models import USER_details
 
 
@@ -9,8 +10,6 @@ class USER_Serializer(serializers.ModelSerializer):
   class Meta:
     model = USER_details
     fields = ['email','password','date_joined']     
-
- 
 
 class LoginSerializer(serializers.Serializer):
     username = serializers.CharField(required=True, max_length=32)
@@ -34,9 +33,5 @@ class LoginSerializer(serializers.Serializer):
             msg = "User name and password not empty"
             raise exceptions.ValidationError(msg)
         return data
-    
 
-
- 
- 
 
