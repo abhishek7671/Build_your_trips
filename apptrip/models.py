@@ -1,5 +1,5 @@
-# from django.db import models
-# import uuid
+from django.db import models
+import uuid
 from djongo import models
 # from django.contrib.gis.geos import Point
 # from rest_framework_gis.serializers import GeoModelSerializer
@@ -11,28 +11,32 @@ class PastTravelledTrips(models.Model):
     Trip_name = models.CharField(max_length=100)
     Start_date  =models.DateField(null=True, blank=True) 
     End_date =models.DateField(null=True, blank=True)
-    Email = models.EmailField(default = None)
+    days= models.PositiveIntegerField(default=10)
+    Email =  models.EmailField(max_length=70)
     Budget = models.IntegerField()
-    location = models.JSONField()
-
+    address = models.CharField(max_length=100)
+    location= models.JSONField(default=None)
+    created_date = models.DateTimeField(auto_now_add=True)
+    
 
 class PreviousTrips(models.Model):
     ptrip = models.EmbeddedField(model_container=PastTravelledTrips)
     headline = models.CharField(max_length=225)   
 
-# class Location(models.Model):
-#     location=models.ForeignKey(PastTravelledTrips, on_delete=models.CASCADE,related_name='user_location', null=True, blank=True)
-#     location_name = models.CharField(max_length=200)
-#     location_latitude = models.CharField(max_length=200)
-#     location_longitude = models.CharField(max_length=200)
     
 class FutureTrips(models.Model):
-    _id = models.ObjectIdField(primary_key=True)
+    _id = models.ObjectIdField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')
     Trip_name = models.CharField(max_length=100)
     Start_date  =models.DateField(null=True, blank=True) 
     End_date =models.DateField(null=True, blank=True)
+    days= models.PositiveIntegerField(default=10)
     Email =  models.EmailField(max_length=70)
     Budget = models.IntegerField()
+    address = models.CharField(max_length=100)
+    location= models.JSONField(default=None)
+    date_info = models.DateTimeField(auto_now_add=True)
+    trip_id = models.CharField(max_length=24)
+
 
 
 
@@ -42,3 +46,5 @@ class Ft(models.Model):
     build = models.CharField(max_length=200)
 
     
+
+

@@ -18,11 +18,19 @@ urlpatterns = [
 
     
     path('f/',views.Ftrip.as_view()),
+    path('CompleteTrip/',views.CompleteTrip.as_view()),
     
     path('future/',views.Future.as_view()),
     path('future/<str:_id>/',views.Future.as_view()),
 
-   
+    # path('trips/',views.TripCreateView.as_view()),
+    path('trips/<str:trip_id>/', views.TripView.as_view(), name='trip-detail'),
+
+#    path('general/',views. GeneralTrip.as_view()),
+#    path('natural/',views.NaturalTrip.as_view()),
+#    path('natural/<str:_id>/',views.NaturalTrip.as_view()),
+
+
 
 
 

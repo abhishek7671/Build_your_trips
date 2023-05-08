@@ -1,29 +1,30 @@
-from rest_framework_simplejwt.authentication import JWTAuthentication as JWTA
 
-from rest_framework_simplejwt.token_blacklist.models import OutstandingToken, BlacklistedToken
-
+import jwt
+from .models import USER_details
+from rest_framework.authentication import BaseAuthentication
 from rest_framework.exceptions import AuthenticationFailed
-
-
-
-
-class JWTAuthentication(JWTA):
-
+from bson import ObjectId
+JWT_SECRET_KEY = 'django-insecure-6i9o@jxm94t!sao=x%*6yhx9fyht^62ir(wzw5sre^*a%lk02'
+JWT_ACCESS_TOKEN_EXPIRATION = 60
+JWT_REFRESH_TOKEN_EXPIRATION = 1440
+JWT_ALGORITHM = 'HS256'
+        
+class JWTAuthentication(BaseAuthentication):
     """
-    This custom wrapper skip all the public urls from authentication.
+    Allows access only to authenticated users with valid JWT tokens.
     """
-
-
-
 
     def authenticate(self, request):
-        res = super().authenticate(request)
-        
-        if res is None:
-            return res
-        user, token = res
-        refersh_token=OutstandingToken.objects.filter(user=user).latest("id")
-        if BlacklistedToken.objects.filter(token=refersh_token).exists():
-            raise AuthenticationFailed('Your Token is Expired')
-        print(refersh_token.token)
-        return (user,token)
+        auth_header = request.headers.get('Authorization')
+        if auth_header is None:
+            return None
+        try:
+            _, token = auth_header.split()
+            payload = jwt.decode(token, JWT_SECRET_KEY, algorithms=[JWT_ALGORITHM])
+        except (ValueError, jwt.exceptions.DecodeError, jwt.exceptions.ExpiredSignatureError):
+            raise AuthenticationFailed('Invalid token.')
+        try:
+            user = USER_details.objects.get(_id=ObjectId(payload['user_id']))
+        except USER_details.DoesNotExist:
+            raise AuthenticationFailed('User not found.')
+        return (user, None)

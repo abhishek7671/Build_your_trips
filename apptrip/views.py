@@ -22,21 +22,119 @@ import logging
 from rest_framework.views import APIView
 from rest_framework.response import Response
 
-logger = logging.getLogger(__name__)
+# logger = logging.getLogger(__name__)
 
 from bson import ObjectId
+import uuid
 
 
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+# from .serializers import TripSerializer
+# from .models import Trip
+from drf_yasg.utils import swagger_auto_schema
+from drf_yasg import openapi
 
-# this code is on class based views 
-# 
-class Ptrip(generics.ListAPIView,generics.CreateAPIView):
-    queryset = PastTravelledTrips.objects.all()
-    serializer_class = Pserializer
-    # lookup_field = 'pk'
-    # authentication_classes = [BasicAuthentication]
-    # permission_classes = [IsAuthenticated]
+# class TripCreateView(APIView):
+#     @swagger_auto_schema(
+#         operation_id='Create User',
+#         request_body=TripSerializer)
+#     def post(self, request, format=None):
+#         serializer = TripSerializer(data=request.data)
+#         if serializer.is_valid():
+#             serializer.save()
+#             return Response(serializer.data, status=status.HTTP_201_CREATED)
+#         else:
+#             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+# from rest_framework.generics import ListAPIView
+# from django_filters.rest_framework import DjangoFilterBackend
+# from bson import ObjectId
+
+
+# class GeneralTrip(ListAPIView):
     
+#     queryset = Trip.objects.all()
+#     serializer_class = TripSerializer
+#     filter_backends = [DjangoFilterBackend]
+#     filterset_fields = ['trip_name']
+
+
+
+# class NaturalTrip(APIView):
+#     @swagger_auto_schema(
+#         operation_id='NaturalTrip ',
+#         request_body=TripSerializer)
+#     def get(self, request, _id=None , format=None):
+        
+#         if _id is not None:
+            
+#             trip=Trip.objects.get(_id=ObjectId(_id))
+#             serializer=TripSerializer(trip)
+#             return Response(serializer.data)
+#         trip = Trip.objects.all()
+#         serializer = TripSerializer(trip, many=True)
+#         return Response(serializer.data)
+
+
+
+from datetime import timedelta
+from rest_framework.response import Response
+from rest_framework.views import APIView
+# from .models import Trip
+
+
+class TripView(APIView):
+    def post(self, request, trip_id):
+        trip = PastTravelledTrips.objects.filter(trip_id=trip_id).first()
+        if not trip:
+            return Response({'error': 'Trip not found'}, status=404)
+        
+        output = {}
+        for i in range(trip.days):
+            date = (trip.start_date + timedelta(days=i)).strftime('%Y-%m-%d')
+            places = []
+            for j in range(len(trip.location)):
+                place = {
+                    'name': f'Place {j+1}',
+                    'location': trip.location[j],
+                    'budget': trip.budget/len(trip.location),
+                }
+                places.append(place)
+            
+            output[date] = {
+                'Place of Visit': places,
+            }
+        
+        return Response(output)
+
+
+from pymongo import MongoClient
+client = MongoClient('mongodb://localhost:27017')
+db = client['santhosh']
+mycol = db['apptrip_pasttravelledtrips']
+
+
+class Ptrip(APIView):
+    def post(self, request, format=None):
+        
+        serializer = Pserializer(data=request.data)
+        trip_id= ObjectId()
+        # trip_id = str(trip_id)
+        print(trip_id)
+        if serializer.is_valid():
+            serializer.save()
+            
+            # mycol.insert_one({
+            #     'trip_id':trip_id,
+                
+            # })
+            return Response({"message": "Post data successfully"}, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
 
 class Past(APIView):
     def get(self, request, _id=None , format=None):
@@ -97,16 +195,41 @@ class Past(APIView):
             return Response({"error": "No _id provided"}, status=status.HTTP_400_BAD_REQUEST)
 
     
+from pymongo import MongoClient
+client = MongoClient('mongodb://localhost:27017')
+db = client['santhosh']
+mycol = db['apptrip_futuretrips']
 
-
-
-class Ftrip(ListAPIView,CreateAPIView):
-    queryset = FutureTrips.objects.all()
-    serializer_class = FSerializer
-    # authentication_classes = [BasicAuthentication]
-    # permission_classes = [IsAuthenticated]
-    # filter_backends = [DjangoFilterBackend]
-    # filterset_fields = ['Place_name']
+class Ftrip(APIView):
+    
+    def post(self, request, format=None):
+        id = ObjectId()
+        id = str(id)
+        serializer = FSerializer(data=request.data)
+        if serializer.is_valid():
+            user_obj = serializer.save()
+            user_obj.trip_id=id
+            user_obj.save()
+            response_data = {
+                "Message":"Post Data Successfully",
+                "trip_id":id,
+                "Created_Data":serializer.data['date_info']
+            }
+            return Response(response_data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+class CompleteTrip(APIView):
+    def post(self, request):
+        data = request.data
+        trip_id = data['trip_id']
+        date1 = data['startdate']
+        date2 = data['enddate']
+        mycol.update(
+            {"trip_id":trip_id},
+            {"$set":{"startdate":date1,"enddate":date2}}
+            )
+        
+        return Response('success')
 
 
 
@@ -180,11 +303,11 @@ class Future(APIView):
 #             return Response(serializer.data)
         
 #         elif request.method == 'POST':
-#             serializer = Pserializer(data=request.data)
-#             if serializer.is_valid():
-#                 serializer.save()
-#                 return Response(serializer.data, status=status.HTTP_201_CREATED)
-#             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            # serializer = Pserializer(data=request.data)
+            # if serializer.is_valid():
+            #     serializer.save()
+            #     return Response(serializer.data, status=status.HTTP_201_CREATED)
+            # return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         
 #         elif request.method == 'PUT':
 #             trip = PastTravelledTrips.objects.get(pk=request.data.get('id'))

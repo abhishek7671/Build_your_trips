@@ -1,19 +1,18 @@
 # from django.contrib.auth import get_user_model
-from django.contrib.auth.backends import ModelBackend, UserModel
-from django.db.models import Q
-
+from django.contrib.auth.backends import ModelBackend
+from django.contrib.auth import get_user_model
+from .models import USER_details
+from rest_framework.exceptions import AuthenticationFailed,PermissionDenied
+from django.contrib.auth.hashers import check_password
 
 class EmailBackend(ModelBackend):
-
     def authenticate(self, request, username=None, password=None, **kwargs):
-        # UserModel = get_user_model()
+        # UserModel = User()
         try:
-            # user = UserModel.objects.get(email=username)
-            user = UserModel.objects.get(Q(username__iexact=username) | Q(email__iexact=username))
-        except UserModel.DoesNotExist:
-            return None
+            user = USER_details.objects.get(email=username)
+        except USER_details.DoesNotExist:
+                raise AuthenticationFailed ("Email is not valid")
         else:
-            if user.check_password(password):
+            if check_password(password,user.password):
                 return user
-
-        return None
+            raise PermissionDenied("Password is not valid")

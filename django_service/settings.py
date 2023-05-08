@@ -53,13 +53,10 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework',
     'rest_framework.authtoken',
-    # 'rest_framework_simplejwt.token_blacklist',
-    # 'rest_framework_swagger',
     'drf_yasg',
     'app',
     'apptrip',
     'django_filters',
-    'rest_framework_simplejwt',
 
     
 ]
@@ -68,25 +65,14 @@ MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
-    # 'django.middleware.csrf.CsrfViewMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
 
-# REST_FRAMEWORK = {
-#     'DEFAULT_PERMISSION_CLASSES': (
-#         'rest_framework.permissions.IsAuthenticated',
-#     ),
-#     'DEFAULT_AUTHENTICATION_CLASSES': (
-#         'rest_framework_jwt.authentication.JSONWebTokenAuthentication',
-#         'rest_framework.authentication.SessionAuthentication',
-#         'rest_framework.authentication.BasicAuthentication',
-#     ),
-# }
-
-# GDAL_LIBRARY_PATH = 'D:/usr/lib/libgdal.so.20'
+ 
 
 AUTHENTICATION_BACKENDS = ('app.backend.EmailBackend', )
 
@@ -124,18 +110,7 @@ DATABASES = {
     }
 }
 
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.mysql',
-#         'NAME': 'users',
-#         'USER':'root',
-#         'PASSWORD':'root',
-#         'HOST':'localhost',
-#         'ENFORCE_SCHEMA' : False,
-#     }
-# }
 
-AUTH_USER_MODEL = 'app.User'
 # Password validation
 # https://docs.djangoproject.com/en/3.0/ref/settings/#auth-password-validators
 
@@ -220,108 +195,6 @@ STATIC_URL = '/static/'
 
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 MEDIA_URL = '/media/'
-# JWT_AUTH = {
-#     'JWT_ENCODE_HANDLER':
-#     'rest_framework_jwt.utils.jwt_encode_handler',
-
-#     'JWT_DECODE_HANDLER':
-#     'rest_framework_jwt.utils.jwt_decode_handler',
-
-#     'JWT_PAYLOAD_HANDLER':
-#     'rest_framework_jwt.utils.jwt_payload_handler',
-
-#     'JWT_PAYLOAD_GET_USER_ID_HANDLER':
-#     'rest_framework_jwt.utils.jwt_get_user_id_from_payload_handler',
-
-#     'JWT_RESPONSE_PAYLOAD_HANDLER':
-#     'rest_framework_jwt.utils.jwt_response_payload_handler',
-
-#     'JWT_SECRET_KEY': SECRET_KEY,
-#     'JWT_GET_USER_SECRET_KEY': None,
-#     'JWT_PUBLIC_KEY': None,
-#     'JWT_PRIVATE_KEY': None,
-#     'JWT_ALGORITHM': 'HS256',
-#     'JWT_VERIFY': True,
-#     'JWT_VERIFY_EXPIRATION': True,
-#     'JWT_LEEWAY': 0,
-#     'JWT_EXPIRATION_DELTA': datetime.timedelta(days=JSON_SETTINGS.get('JWT_EXP',1)),
-#     'JWT_AUDIENCE': None,
-#     'JWT_ISSUER': None,
-
-#     'JWT_ALLOW_REFRESH': False,
-#     'JWT_REFRESH_EXPIRATION_DELTA': datetime.timedelta(days=7),
-
-#     'JWT_AUTH_HEADER_PREFIX': 'JWT',
-#     'JWT_AUTH_COOKIE': None,
-
-# }
-
-
-from datetime import timedelta
-
-
-SIMPLE_JWT = {
-    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=35),
-    "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
-    "ROTATE_REFRESH_TOKENS": False,
-    "BLACKLIST_AFTER_ROTATION": False,
-    "UPDATE_LAST_LOGIN": False,
-
-    "ALGORITHM": "HS256",
-    "SIGNING_KEY": SECRET_KEY,
-    "VERIFYING_KEY": "",
-    "AUDIENCE": None,
-    "ISSUER": None,
-    "JSON_ENCODER": None,
-    "JWK_URL": None,
-    "LEEWAY": 0,
-
-    "AUTH_HEADER_TYPES": ("Bearer",),
-    "AUTH_HEADER_NAME": "HTTP_AUTHORIZATION",
-    "USER_ID_FIELD": "id",
-    "USER_ID_CLAIM": "user_id",
-    "USER_AUTHENTICATION_RULE": "rest_framework_simplejwt.authentication.default_user_authentication_rule",
-
-    "AUTH_TOKEN_CLASSES": ("rest_framework_simplejwt.tokens.AccessToken",),
-    "TOKEN_TYPE_CLAIM": "token_type",
-    "TOKEN_USER_CLASS": "rest_framework_simplejwt.models.TokenUser",
-
-    "JTI_CLAIM": "jti",
-
-    "SLIDING_TOKEN_REFRESH_EXP_CLAIM": "refresh_exp",
-    "SLIDING_TOKEN_LIFETIME": timedelta(minutes=35),
-    "SLIDING_TOKEN_REFRESH_LIFETIME": timedelta(days=1),
-
-    "TOKEN_OBTAIN_SERIALIZER": "rest_framework_simplejwt.serializers.TokenObtainPairSerializer",
-    "TOKEN_REFRESH_SERIALIZER": "rest_framework_simplejwt.serializers.TokenRefreshSerializer",
-    "TOKEN_VERIFY_SERIALIZER": "rest_framework_simplejwt.serializers.TokenVerifySerializer",
-    "TOKEN_BLACKLIST_SERIALIZER": "rest_framework_simplejwt.serializers.TokenBlacklistSerializer",
-    "SLIDING_TOKEN_OBTAIN_SERIALIZER": "rest_framework_simplejwt.serializers.TokenObtainSlidingSerializer",
-    "SLIDING_TOKEN_REFRESH_SERIALIZER": "rest_framework_simplejwt.serializers.TokenRefreshSlidingSerializer",
-}
-
-REST_FRAMEWORK = {
-    
-    'DEFAULT_AUTHENTICATION_CLASSES': (
-       
-        'rest_framework_simplejwt.authentication.JWTAuthentication',
-    )
-
-}
-
-REST_FRAMEWORK = {
-    
-    'DEFAULT_AUTHENTICATION_CLASSES': (
-    
-    'app.authentication.JWTAuthentication',
-
- )
-
-
-
-
-}
-
 
 SWAGGER_SETTINGS = {
     'USE_SESSION_AUTH': False,
@@ -338,3 +211,13 @@ SWAGGER_SETTINGS = {
 LOGIN_REDIRECT_URL='swagger'
 
 LOGOUT_REDIRECT_URL='swagger'
+
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'app.authentication.JWTAuthentication',
+    ),
+}
+
+CORS_ORIGIN_ALLOW_ALL = True
+CORS_ALLOW_CREDENTIALS = True
