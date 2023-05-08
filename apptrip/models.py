@@ -11,7 +11,7 @@ class PastTravelledTrips(models.Model):
     Trip_name = models.CharField(max_length=100)
     Start_date  =models.DateField(null=True, blank=True) 
     End_date =models.DateField(null=True, blank=True)
-    days= models.IntegerField()
+    days= models.PositiveIntegerField(default=5)
     Email =  models.EmailField(max_length=70)
     Budget = models.IntegerField()
     address = models.CharField(max_length=45)
@@ -21,7 +21,7 @@ class PastTravelledTrips(models.Model):
 
 class PreviousTrips(models.Model):
     ptrip = models.EmbeddedField(model_container=PastTravelledTrips)
-    headline = models.CharField(max_length=225)   
+    
 
     
 class FutureTrips(models.Model):
@@ -43,7 +43,7 @@ class FutureTrips(models.Model):
 
 class Ft(models.Model):
     ftrip = models.EmbeddedField(model_container=FutureTrips)
-    build = models.CharField(max_length=200)
+    
 
     
 
