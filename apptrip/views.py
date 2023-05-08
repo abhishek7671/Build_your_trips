@@ -21,7 +21,7 @@ class Ptrip(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-
+#past call
 class Past(APIView):
     def get(self, request, _id=None , format=None):
         
