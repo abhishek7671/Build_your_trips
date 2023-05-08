@@ -11,10 +11,10 @@ class PastTravelledTrips(models.Model):
     Trip_name = models.CharField(max_length=100)
     Start_date  =models.DateField(null=True, blank=True) 
     End_date =models.DateField(null=True, blank=True)
-    days= models.PositiveIntegerField(default=10)
+    days= models.IntegerField()
     Email =  models.EmailField(max_length=70)
     Budget = models.IntegerField()
-    address = models.CharField(max_length=100)
+    address = models.CharField(max_length=45)
     location= models.JSONField(default=None)
     created_date = models.DateTimeField(auto_now_add=True)
     
