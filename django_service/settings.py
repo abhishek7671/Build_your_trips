@@ -54,12 +54,12 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework',
     'rest_framework.authtoken',
-    # 'rest_framework_swagger',
     'drf_yasg',
     'app',
     'apptrip',
     'django_filters',
     'corsheaders',
+
 
     
 ]
@@ -75,17 +75,6 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-
-# REST_FRAMEWORK = {
-#     'DEFAULT_PERMISSION_CLASSES': (
-#         'rest_framework.permissions.IsAuthenticated',
-#     ),
-#     'DEFAULT_AUTHENTICATION_CLASSES': (
-#         'rest_framework_jwt.authentication.JSONWebTokenAuthentication',
-#         'rest_framework.authentication.SessionAuthentication',
-#         'rest_framework.authentication.BasicAuthentication',
-#     ),
-# }
 
  
 
@@ -125,18 +114,7 @@ DATABASES = {
     }
 }
 
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.mysql',
-#         'NAME': 'users',
-#         'USER':'root',
-#         'PASSWORD':'root',
-#         'HOST':'localhost',
-#         'ENFORCE_SCHEMA' : False,
-#     }
-# }
 
-AUTH_USER_MODEL = 'app.User'
 # Password validation
 # https://docs.djangoproject.com/en/3.0/ref/settings/#auth-password-validators
 
@@ -219,10 +197,33 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+MEDIA_URL = '/media/'
 
 
+SWAGGER_SETTINGS = {
+    'USE_SESSION_AUTH': False,
+    'SECURITY_DEFINITIONS': {
+    'Bearer': {
+    'type': 'apiKey',
+    'name': 'Authorization',
+    'in': 'header'
+    }
+}
+
+}
+
+LOGIN_REDIRECT_URL='swagger'
+
+LOGOUT_REDIRECT_URL='swagger'
 
 
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'app.authentication.JWTAuthentication',
+    ),
+}
 
-
+CORS_ORIGIN_ALLOW_ALL = True
+CORS_ALLOW_CREDENTIALS = True
 
