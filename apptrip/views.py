@@ -56,20 +56,6 @@ class pasttrip(APIView):
 
 mycol1 = db['apptrip_pasttravelledtrips']
 
-# class Past(APIView):
-#     def get(self, request, pk):
-#         collection = mycol1
-#         trip = collection.find_one({"trip_id": pk,})
-        
-#         if trip is None:
-#             return Response({"message": "Trip not found"}, status=404)
-        
-#         trip_id = str(trip["trip_id"])
-#         trip_data = {"trip_id": trip_id, "trip_name": trip["trip_name"], "budget": trip["budget"]}
-        
-#         return Response({"message": "success", "trip": trip_data}, status=200)
-
-
 class Past(APIView):
     def get(self, request, user_id, trip_id):
         collection = mycol1
@@ -79,26 +65,18 @@ class Past(APIView):
             return Response({"message": "Trip not found"}, status=404)
         
         trip_id = str(trip["trip_id"])
-        trip_data = {"trip_id": trip_id, "trip_name": trip["trip_name"],"start_date":trip["start_date"],"end_date":trip["end_date"],"days":trip["days"],"email":trip["email"],"budget": trip["budget"],"address":trip["address"],"location":trip["location"],"date_info":trip["date_info"]}
+        trip_data = {"trip_id": trip_id,
+                    "trip_name": trip["trip_name"],
+                    "start_date":trip["start_date"],
+                    "end_date":trip["end_date"],
+                    "days":trip["days"],
+                    "email":trip["email"],
+                    "budget": trip["budget"],
+                    "address":trip["address"],
+                    "location":trip["location"],
+                    "date_info":trip["date_info"]}
         
         return Response({"message": "success", "trip": trip_data}, status=200)
-
-    
-    
-    # def get(self, request,pk):
-    #     permission_classes = [CustomIsauthenticated]
-        
-    #     if id is not None:
-    #         id = ObjectId(request.user._id)
-            
-
-    #         trip=PastTravelledTrips.objects.get(trip_id=pk )
-    #         serializer=Pserializer(trip)
-    #         return Response(serializer.data)
-    #     trip = PastTravelledTrips.objects.all()
-    #     serializer = Pserializer(trip, many=True)
-    #     return Response(serializer.data)
-
 
 
 from pymongo import MongoClient
@@ -147,18 +125,6 @@ from bson import ObjectId
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-# class Future(APIView):
-#     def get(self, request, pk):
-#         collection = mycol
-#         trip = collection.find_one({"trip_id": pk,})
-        
-#         if trip is None:
-#             return Response({"message": "Trip not found"}, status=404)
-        
-#         trip_id = str(trip["trip_id"])
-#         trip_data = {"trip_id": trip_id, "trip_name": trip["trip_name"], "budget": trip["budget"]}
-        
-#         return Response({"message": "success", "trip": trip_data}, status=200)
     
 class Future(APIView):
     def get(self, request, user_id, trip_id):
@@ -169,7 +135,16 @@ class Future(APIView):
             return Response({"message": "Trip not found"}, status=404)
         
         trip_id = str(trip["trip_id"])
-        trip_data = {"trip_id": trip_id, "trip_name": trip["trip_name"],"start_date":trip["start_date"],"end_date":trip["end_date"],"days":trip["days"],"email":trip["email"],"budget": trip["budget"],"address":trip["address"],"location":trip["location"],"date_info":trip["date_info"]}
+        trip_data = {"trip_id": trip_id, 
+                     "trip_name": trip["trip_name"],
+                     "start_date":trip["start_date"],
+                     "end_date":trip["end_date"],
+                     "days":trip["days"],
+                     "email":trip["email"],
+                     "budget": trip["budget"],
+                     "address":trip["address"],
+                     "location":trip["location"],
+                     "date_info":trip["date_info"]}
         
         return Response({"message": "success", "trip": trip_data}, status=200)
     
