@@ -8,15 +8,15 @@ class Pserializer(serializers.ModelSerializer):
     
     class Meta:
         model = PastTravelledTrips
-        fields = ["Trip_name","Start_date","End_date","Email","Budget","location"]
-
+        fields = ["trip_name","start_date","end_date","days","email","budget","address","location","date_info"]
+        # fields = '__all__'
    
 
 
 class FSerializer(serializers.ModelSerializer):
     class Meta:
         model = FutureTrips
-        fields = ['_id','Trip_name','Start_date', 'End_date','Email','Budget','location','date_info']
+        fields = ["trip_name","start_date","end_date","days","email","budget","address","location","date_info"]
         
 
 
