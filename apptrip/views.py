@@ -55,7 +55,7 @@ class pasttrip(APIView):
     
 
 
-class Past(APIView):
+class Past_User_id(APIView):
     def get(self, request, user_id, format=None):
         try:
             user_objs = PastTravelledTrips.objects.filter(user_id=user_id)
