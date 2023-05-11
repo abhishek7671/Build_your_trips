@@ -103,7 +103,7 @@ class Past(APIView):
         enddate = user2['enddate']
         startdate = user2['startdate']
        
-        # Get start date locations
+        # Get start date locations tr
 
         
         startdate_locations = []
