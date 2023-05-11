@@ -306,41 +306,70 @@ class Futurelocation(APIView):
 
 
 
-# class Futurelocation(APIView):
-#     permission_classes = [CustomIsauthenticated]
+class Future(APIView):
+    permission_classes = [CustomIsauthenticated]
 
-#     def get(self, request, user_id, trip_id):
-#         db_client = MongoClient('mongodb://localhost:27017')
-#         db = db_client['santhosh']
-#         collection = db['apptrip_futuretrips']
+    def get(self, request, user_id, trip_id):
+        db_client = MongoClient('mongodb://localhost:27017')
+        db = db_client['santhosh']
+        collection = db['apptrip_futuretrips']
 
-#         user = collection.find_one({'user_id': str(user_id), 'trip_id': str(trip_id)})
-#         if not user:
-#             raise Http404
+        user = collection.find_one({'user_id': str(user_id), 'trip_id': str(trip_id)})
+        if not user:
+            raise Http404
 
-#         location = user['location']
-#         x = location[0]
-#         y = location[1]
-#         mycol = db['apptrip_futuretrips']
-#         user2 = mycol.find_one({'user_id': str(user_id), 'trip_id': str(trip_id)})
-#         enddate = user2['enddate']
-#         startdate = user2['startdate']
+        location = user['location']
+        x = location[0]
+        y = location[1]
         
+        google_maps_url = f'https://www.google.com/maps/dir/?api=1&origin={x},{y}'
+        trip_data = {"trip_id": trip_id, 
+                     "trip_name": user["trip_name"],
+                     "start_date":user["start_date"],
+                     "end_date":user["end_date"],
+                     "days":user["days"],
+                     "email":user["email"],
+                     "budget": user["budget"],
+                     "address":user["address"],
+                     "date_info":user["date_info"]}
+        
+        mycol = db['apptrip_futuretrips']
+        user2 = mycol.find_one({'user_id': str(user_id), 'trip_id': str(trip_id)})
+        enddate = user2['enddate']
+        startdate = user2['startdate']
+       
+        # Get start date locations
 
-#         google_maps_url = f'https://www.google.com/maps/dir/?api=1&origin={x},{y}'
-#         trip_data = {"trip_id": trip_id, 
-#                      "trip_name": user["trip_name"],
-#                      "start_date":user["start_date"],
-#                      "end_date":user["end_date"],
-#                      "days":user["days"],
-#                      "email":user["email"],
-#                      "budget": user["budget"],
-#                      "address":user["address"],
-#                      "date_info":user["date_info"]}
+        
+        startdate_locations = []
+        for date,place_info in startdate.items():
+            for visit in place_info['Place of Visit']:
+                startdate_locations.append({
+                    
+                    'name': visit['name'],
+                    'budget':visit['budget'],
+                    'location': visit['location']
+                    
+                })
 
-#         response = {
-#             'location': google_maps_url
-#         }
-#         return Response({"message": "get the data successfully", "user": trip_data, **response},status=200)
+        # Get end date locations
+        enddate_locations = []
+        for date, place_info in enddate.items():
+            for visit in place_info['Place of Visit']:
+                enddate_locations.append({
+                    
+                    'name': visit['name'],
+                    'budget':visit['budget'],
+                    'location': visit['location']
+                    
+                })
+                response = {
+            'main_location': google_maps_url,
+            'startdate_locations': startdate_locations,
+            'enddate_locations': enddate_locations
+        }
+
+        
+        return Response({"message": "get the data successfully", "user": trip_data, **response},status=200)
 
 
