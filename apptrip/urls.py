@@ -8,6 +8,8 @@ urlpatterns = [
     path(r'past',views.Ptrip.as_view()),
     path(r'pastcomplete',views.pasttrip.as_view()),
     path('past/<str:user_id>/<str:trip_id>/', views.Past.as_view()),
+
+    path(r'past/<str:user_id>',views.Past.as_view()),
     
 
 

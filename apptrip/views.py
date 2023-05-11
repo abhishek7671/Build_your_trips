@@ -56,36 +56,102 @@ class pasttrip(APIView):
 
 
 class Past(APIView):
+    def get(self, request, user_id, format=None):
+        try:
+            user_objs = PastTravelledTrips.objects.filter(user_id=user_id)
+            serializer = Pserializer(user_objs, many=True)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except PastTravelledTrips.DoesNotExist:
+            return Response({"Message": "User not found."}, status=status.HTTP_404_NOT_FOUND)
+
+
+
+
+
+class Past(APIView):
     permission_classes = [CustomIsauthenticated]
 
     def get(self, request, user_id, trip_id):
         db_client = MongoClient('mongodb://localhost:27017')
         db = db_client['santhosh']
-        call = db['apptrip_pasttravelledtrips']
+        collection = db['apptrip_pasttravelledtrips']
 
-        past = call.find_one({'user_id': str(user_id), 'trip_id': str(trip_id)})
-        if not past:
+        user = collection.find_one({'user_id': str(user_id), 'trip_id': str(trip_id)})
+        if not user:
             raise Http404
 
-        location = past['location']
+        location = user['location']
         x = location[0]
         y = location[1]
-        google_maps_url = f'https://www.google.com/maps/dir/?api=1&origin={x},{y}'
-        trip_data = {"trip_id": trip_id, 
-                     "trip_name": past["trip_name"],
-                     "start_date":past["start_date"],
-                     "end_date":past["end_date"],
-                     "days":past["days"],
-                     "email":past["email"],
-                     "budget": past["budget"],
-                     "address":past["address"],
-                     "date_info":past["date_info"]}
 
-        response = {
-            'location': google_maps_url
+
+        google_maps_url = f'https://www.google.com/maps/dir/?api=1&origin={x},{y}'
+        trip_data = {
+            "trip_id": trip_id,
+            "trip_name": user["trip_name"],
+            "start_date": user["start_date"],
+            "end_date": user["end_date"],
+            "days": user["days"],
+            "email": user["email"],
+            "budget": user["budget"],
+            "address": user["address"],
+            "date_info": user["date_info"]
         }
-        return Response({"message": "get the data successfully", "past": trip_data, **response},status=200)
-    
+        
+        mycol = db['apptrip_pasttravelledtrips']
+        user2 = mycol.find_one({'user_id': str(user_id), 'trip_id': str(trip_id)})
+        enddate = user2['enddate']
+        startdate = user2['startdate']
+       
+        # Get start date locations
+
+        
+        startdate_locations = []
+        for date,place_info in startdate.items():
+            for visit in place_info['Place of Visit']:
+        #         startdate_locations.append({
+        #             'date':visit['date'],
+        #             'name': visit['name'],
+        #             'budget':visit['budget'],
+        #             'location': visit['location']
+                    
+        #         })
+                placename= visit['name']
+                li_1=visit['location'][0]
+                lo_1=visit['location'][1]
+                google_maps_url_1 = f'https://www.google.com/maps/dir/?api=1&origin={li_1},{lo_1}'
+                response_1 = {
+            
+            'name': visit['name'],
+            'budget':visit['budget'], 
+            'location': google_maps_url_1
+        }
+        # Get end date locations
+        enddate_locations = []
+        for date, place_info in enddate.items():
+            for visit in place_info['Place of Visit']:
+                
+                
+                place= visit['name']
+                li=visit['location'][0]
+                lo=visit['location'][1]
+                google_maps_url_2 = f'https://www.google.com/maps/dir/?api=1&origin={li},{lo}'
+                response_2 = {
+            'name': visit['name'],
+            'budget':visit['budget'],
+            "location": google_maps_url_2,
+        }
+        response = {
+            'main_location': google_maps_url,
+            'startdate_locations': response_1,
+            'enddate_locations': response_2
+        }
+
+        return Response({
+            "message": "get the data successfully",
+            "user": trip_data,
+            **response
+        }, status=200)
 
 
 
@@ -131,6 +197,13 @@ class CompleteTrip(APIView):
         return Response('success')
 
 
+    
+
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from pymongo import MongoClient
+from django.http import Http404
+
 class Futurelocation(APIView):
     permission_classes = [CustomIsauthenticated]
 
@@ -146,206 +219,128 @@ class Futurelocation(APIView):
         location = user['location']
         x = location[0]
         y = location[1]
+
+
         google_maps_url = f'https://www.google.com/maps/dir/?api=1&origin={x},{y}'
-        trip_data = {"trip_id": trip_id, 
-                     "trip_name": user["trip_name"],
-                     "start_date":user["start_date"],
-                     "end_date":user["end_date"],
-                     "days":user["days"],
-                     "email":user["email"],
-                     "budget": user["budget"],
-                     "address":user["address"],
-                     "date_info":user["date_info"]}
-
-        response = {
-            'location': google_maps_url
+        trip_data = {
+            "trip_id": trip_id,
+            "trip_name": user["trip_name"],
+            "start_date": user["start_date"],
+            "end_date": user["end_date"],
+            "days": user["days"],
+            "email": user["email"],
+            "budget": user["budget"],
+            "address": user["address"],
+            "date_info": user["date_info"]
         }
-        return Response({"message": "get the data successfully", "user": trip_data, **response},status=200)
-
-
-    
-
-
-
-
-# class Future(APIView):
-#     def get(self,request,pk):
-#         collection = mycol
-#         trip_id = collection.find_one({"trip_id":pk},{"trip_name":1,"budget":1})
-#         print(trip_id)
-#         return Response({"message": "success", "trip_id": trip_id}, status=200)
-#         # userid=order_id['order_info']
-
-        # collection = db['apptrip_futuretrips']
-
-
-
-
-
-    # def get(self, request, trip_id=None , format=None):
         
-    #     if trip_id is not None:
+        mycol = db['apptrip_futuretrips']
+        user2 = mycol.find_one({'user_id': str(user_id), 'trip_id': str(trip_id)})
+        enddate = user2['enddate']
+        startdate = user2['startdate']
+       
+        # Get start date locations
+
+        
+        startdate_locations = []
+        for date,place_info in startdate.items():
+            for visit in place_info['Place of Visit']:
+        #         startdate_locations.append({
+        #             'date':visit['date'],
+        #             'name': visit['name'],
+        #             'budget':visit['budget'],
+        #             'location': visit['location']
+                    
+        #         })
+                placename= visit['name']
+                li_1=visit['location'][0]
+                lo_1=visit['location'][1]
+                google_maps_url_1 = f'https://www.google.com/maps/dir/?api=1&origin={li_1},{lo_1}'
+                response_1 = {
             
-    #         trip=FutureTrips.objects.get(_id=ObjectId(trip_id))
-    #         serializer=FSerializer(trip)
-    #         return Response(serializer.data)
-    #     trip = FutureTrips.objects.all()
-    #     serializer = FSerializer(trip, many=True)
-    #     return Response(serializer.data)
- 
+            'name': visit['name'],
+            'budget':visit['budget'], 
+            'location': google_maps_url_1
+        }
+        # Get end date locations
+        enddate_locations = []
+        for date, place_info in enddate.items():
+            for visit in place_info['Place of Visit']:
+                
+                
+                place= visit['name']
+                li=visit['location'][0]
+                lo=visit['location'][1]
+                google_maps_url_2 = f'https://www.google.com/maps/dir/?api=1&origin={li},{lo}'
+                response_2 = {
+            'name': visit['name'],
+            'budget':visit['budget'],
+            "location": google_maps_url_2,
+        }
+        response = {
+            'main_location': google_maps_url,
+            'startdate_locations': response_1,
+            'enddate_locations': response_2
+        }
+
+        return Response({
+            "message": "get the data successfully",
+            "user": trip_data,
+            **response
+        }, status=200)
 
 
-# class TripDetailView(APIView):        
-#     def get(self, request, trip_id=None , format=None):
-        
-#         if trip_id is not None:
-            
-#             trip=PastTravelledTrips.objects.get(_id=ObjectId(trip_id))
-#             serializer=Pserializer(trip)
-#             return Response(serializer.data)
-#         trip = PastTravelledTrips.objects.all()
-#         serializer = Pserializer(trip, many=True)
-#         return Response(serializer.data)
-    
-    
-    
-    
-
-    # def put(self, request, _id=None, format=None):
-    #     if _id is not None:
-    #         trip = FutureTrips.objects.get(_id=ObjectId(_id))
-    #         serializer = FSerializer(trip, data=request.data)
-    #         if serializer.is_valid():
-    #             serializer.save()
-    #             return Response(serializer.data)
-    #         else:
-    #             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    #     else:
-    #         return Response({"error": "No _id provided"}, status=status.HTTP_400_BAD_REQUEST)
-        
-
-    # def patch(self, request, _id=None, format=None):
-    #     if _id is not None:
-    #         try:
-    #             trip = FutureTrips.objects.get(_id=ObjectId(_id))
-    #             serializer = FSerializer(trip, data=request.data, partial=True)
-    #             if serializer.is_valid():
-    #                 serializer.save()
-    #                 return Response(serializer.data)
-    #             else:
-    #                 return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    #         except FutureTrips.DoesNotExist:
-    #             return Response({"error": "Trip not found."}, status=status.HTTP_404_NOT_FOUND)
-    #         except Exception as e:
-    #             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-    #     else:
-    #         return Response({"error": "No _id provided"}, status=status.HTTP_400_BAD_REQUEST)
-
-
-
-    # def delete(self, request, _id=None, format=None):
-    #     if _id is not None:
-    #         try:
-    #             trip = FutureTrips.objects.get(_id=ObjectId(_id))
-    #             trip.delete()
-    #             return Response({"message": "Trip deleted successfully."})
-    #         except FutureTrips.DoesNotExist:
-    #             return Response({"error": "Trip not found."}, status=status.HTTP_404_NOT_FOUND)
-    #         except Exception as e:
-    #             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-    #     else:
-    #         return Response({"error": "No _id provided"}, status=status.HTTP_400_BAD_REQUEST)
-  
-    
+# class Geolocation (APIView):
+#     permission_classes=[CustomIsauthenticated]
+#     def get(self, request):
+#         user_id=ObjectId(request.user._id)
+#         print(user_id)
+#         collection = db['apptrip_futuretrips']
+#         user = collection.find_one({'user_id':str(user_id)})
+#         location=user['location']
+#         x=location[0]
+#         y=location[1]
+#         response=({'location': 'https://www.google.com/maps/dir/?api=1' + '&origin=' + f'{x},{y}'})
+#         return Response(response)
 
 
 
 
-    
+# class Futurelocation(APIView):
+#     permission_classes = [CustomIsauthenticated]
 
-#     def put(self, request, _id=None, format=None):
-#         if _id is not None:
-#             trip = PastTravelledTrips.objects.get(_id=ObjectId(_id))
-#             serializer = Pserializer(trip, data=request.data)
-#             if serializer.is_valid():
-#                 serializer.save()
-#                 return Response(serializer.data)
-#             else:
-#                 return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-#         else:
-#             return Response({"error": "No _id provided"}, status=status.HTTP_400_BAD_REQUEST)
+#     def get(self, request, user_id, trip_id):
+#         db_client = MongoClient('mongodb://localhost:27017')
+#         db = db_client['santhosh']
+#         collection = db['apptrip_futuretrips']
+
+#         user = collection.find_one({'user_id': str(user_id), 'trip_id': str(trip_id)})
+#         if not user:
+#             raise Http404
+
+#         location = user['location']
+#         x = location[0]
+#         y = location[1]
+#         mycol = db['apptrip_futuretrips']
+#         user2 = mycol.find_one({'user_id': str(user_id), 'trip_id': str(trip_id)})
+#         enddate = user2['enddate']
+#         startdate = user2['startdate']
         
 
-#     def patch(self, request, _id=None, format=None):
-#         if _id is not None:
-#             try:
-#                 trip = PastTravelledTrips.objects.get(_id=ObjectId(_id))
-#                 serializer = Pserializer(trip, data=request.data, partial=True)
-#                 if serializer.is_valid():
-#                     serializer.save()
-#                     return Response(serializer.data)
-#                 else:
-#                     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-#             except PastTravelledTrips.DoesNotExist:
-#                 return Response({"error": "Trip not found."}, status=status.HTTP_404_NOT_FOUND)
-#             except Exception as e:
-#                 return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-#         else:
-#             return Response({"error": "No _id provided"}, status=status.HTTP_400_BAD_REQUEST)
+#         google_maps_url = f'https://www.google.com/maps/dir/?api=1&origin={x},{y}'
+#         trip_data = {"trip_id": trip_id, 
+#                      "trip_name": user["trip_name"],
+#                      "start_date":user["start_date"],
+#                      "end_date":user["end_date"],
+#                      "days":user["days"],
+#                      "email":user["email"],
+#                      "budget": user["budget"],
+#                      "address":user["address"],
+#                      "date_info":user["date_info"]}
+
+#         response = {
+#             'location': google_maps_url
+#         }
+#         return Response({"message": "get the data successfully", "user": trip_data, **response},status=200)
 
 
-
-#     def delete(self, request, _id=None, format=None):
-#         if _id is not None:
-#             try:
-#                 trip = PastTravelledTrips.objects.get(_id=ObjectId(_id))
-#                 trip.delete()
-#                 return Response({"message": "Trip deleted successfully."})
-#             except PastTravelledTrips.DoesNotExist:
-#                 return Response({"error": "Trip not found."}, status=status.HTTP_404_NOT_FOUND)
-#             except Exception as e:
-#                 return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-#         else:
-#             return Response({"error": "No _id provided"}, status=status.HTTP_400_BAD_REQUEST)
-
-
-
-
-# permission_classes = [CustomIsauthenticated]
-#     def post(self, request, format=None):
-#         id = ObjectId(request.user._id)
-#         serializer = Pserializer(data=request.data)
-#         data = request.data
-#         if serializer.is_valid():
-#             user_obj=serializer.save()
-#             user_obj.userID = str(id)
-#             user_obj.save()
-#             return Response({"message": "Message added successfully"}, status=status.HTTP_200_OK)
-#         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-
-
-
-# class Create_Travel(APIView):
-#     def post(self, request, format=None):
-#         trip_id = ObjectId()
-#         trip_id = str(trip_id)
-#         serializer = FSerializer(data=request.data)
-#         if serializer.is_valid():
-#             user_obj = serializer.save()
-#             user_obj.trip_id = trip_id
-
-#             if hasattr(request, 'user') and request.user.is_authenticated:
-#                 user_obj.user_id = request.user.id
-#             else:
-#                 user_obj.user_id = None
-
-#             user_obj.save()
-#             response_data = {
-#                 "Message": "Post Data Successfully",
-#                 "trip_id": trip_id,
-#                 "user_id": user_obj.user_id,
-#                 "Created_Data": serializer.data['date_info']
-#             }
-#             return Response(response_data, status=status.HTTP_200_OK)
-#         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
