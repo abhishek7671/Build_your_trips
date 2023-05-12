@@ -16,7 +16,7 @@ class Pserializer(serializers.ModelSerializer):
 class FSerializer(serializers.ModelSerializer):
     class Meta:
         model = FutureTrips
-        fields = ["trip_name","start_date","end_date","days","email","budget","address","location","date_info"]
+        fields = ["trip_name","start_date","end_date","days","email","budget","address","location","date_info","trip_id","user_id"]
         
 
 
