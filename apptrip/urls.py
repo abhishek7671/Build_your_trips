@@ -17,6 +17,7 @@ urlpatterns = [
     path(r'CompleteTrip',views.CompleteTrip.as_view()),
     path(r'future/<str:user_id>/<str:trip_id>/',views.Futurelocation.as_view()),
     path(r'fut/<str:user_id>/<str:trip_id>/',views.Future.as_view()),
+    path(r'futureuser/<str:user_id>',views.Future_User_id.as_view()),
     
     
 
