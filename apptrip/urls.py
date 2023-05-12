@@ -20,5 +20,4 @@ urlpatterns = [
     path(r'futureuser/<str:user_id>',views.Future_User_id.as_view()),
     
     
-
 ]
