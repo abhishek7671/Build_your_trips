@@ -157,32 +157,6 @@ class CompleteTrip(APIView):
             return Response('success')
     
 
-class Future_User_id(APIView):
-    def get(self, request, user_id, format=None):
-        try:
-            user_objs = FutureTrips.objects.filter(user_id=user_id)
-            serializer = FSerializer(user_objs, many=True)
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        except FutureTrips.DoesNotExist:
-            return Response({"Message": "User not found."}, status=status.HTTP_404_NOT_FOUND)
-
-
-class Future_User_id(APIView):
-    def get(self, request, user_id, trip_id=None, format=None):
-        try:
-            if trip_id is None:
-                # Retrieve future trips for a specific user
-                user_objs = FutureTrips.objects.filter(user_id=user_id)
-                serializer = FSerializer(user_objs, many=True)
-                return Response(serializer.data, status=status.HTTP_200_OK)
-            else:
-                # Retrieve a specific future trip for a user
-                trip_obj = FutureTrips.objects.get(user_id=user_id, trip_id=trip_id)
-                serializer = FSerializer(trip_obj)
-                return Response(serializer.data, status=status.HTTP_200_OK)
-        except FutureTrips.DoesNotExist:
-            return Response({"Message": "User or trip not found."}, status=status.HTTP_404_NOT_FOUND)
-
 
 
 from django.http import Http404
@@ -239,184 +213,15 @@ class Future(APIView):
         return Response({"message": "get the data successfully", "user": trip_data, **response}, status=200)
 
 
+class Future_User_id(APIView):
+    def get(self, request, user_id, format=None):
+        try:
+            user_objs = FutureTrips.objects.filter(user_id=user_id)
+            serializer = FSerializer(user_objs, many=True)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except FutureTrips.DoesNotExist:
+            return Response({"Message": "User not found."}, status=status.HTTP_404_NOT_FOUND)
 
-# class Future(APIView):
-#     permission_classes = [CustomIsauthenticated]
-
-#     def get(self, request, user_id, trip_id):
-#         db_client = MongoClient('mongodb://localhost:27017')
-#         db = db_client['santhosh']
-#         collection = db['apptrip_futuretrips']
-
-#         user = collection.find_one({'user_id': str(user_id), 'trip_id': str(trip_id)})
-#         if not user:
-#             raise Http404
-
-#         location = user['location']
-#         x = location[0]
-#         y = location[1]
-        
-#         google_maps_url = f'https://www.google.com/maps/dir/?api=1&origin={x},{y}'
-#         trip_data = {"trip_id": trip_id, 
-#                      "trip_name": user["trip_name"],
-#                      "start_date":user["start_date"],
-#                      "end_date":user["end_date"],
-#                      "days":user["days"],
-#                      "email":user["email"],
-#                      "budget": user["budget"],
-#                      "address":user["address"],
-#                      "date_info":user["date_info"]}
-        
-#         mycol = db['apptrip_futuretrips']
-#         user2 = mycol.find_one({'user_id': str(user_id), 'trip_id': str(trip_id)})
-#         enddate = user2['enddate']
-#         middledate= user2['middledate']
-#         startdate = user2['startdate']
-       
-#         # Get start date locations
-#         startdate_locations = []
-#         for date,place_info in startdate.items():
-#             for visit in place_info['Place of Visit']:
-#                 startdate_locations.append({
-#                     'date': date,
-#                     'name': visit['name'],
-#                     'budget':visit['budget'],
-#                     'location': visit['location']
-                    
-#                 })
-
-
-#         # Get middle date locations
-#         middledate_locations = []
-#         for date,place_info in middledate.items():
-#             for visit in place_info['Place of Visit']:
-#                 middledate_locations.append({
-#                     'date': date,
-#                     'name': visit['name'],
-#                     'budget':visit['budget'],
-#                     'location': visit['location']
-                    
-#                 })
-
-#         # Get end date locations
-#         enddate_locations = []
-#         for date, place_info in enddate.items():
-#             for visit in place_info['Place of Visit']:
-#                 enddate_locations.append({
-#                     'date': date,
-#                     'name': visit['name'],
-#                     'budget':visit['budget'],
-#                     'location': visit['location']
-                    
-#                 })
-#                 response = {
-#             'main_location': google_maps_url,
-#             'startdate_locations': startdate_locations,
-#             'middledate_locations':middledate_locations,
-#             'enddate_locations': enddate_locations
-#         }
-#         return Response({"message": "get the data successfully", "user": trip_data, **response},status=200)
-
-
-
-    
-
-
-# class Futurelocation(APIView):
-#     permission_classes = [CustomIsauthenticated]
-
-#     def get(self, request, user_id, trip_id):
-#         db_client = MongoClient('mongodb://localhost:27017')
-#         db = db_client['santhosh']
-#         collection = db['apptrip_futuretrips']
-
-#         user = collection.find_one({'user_id': str(user_id), 'trip_id': str(trip_id)})
-#         if not user:
-#             raise Http404
-
-#         location = user['location']
-#         x = location[0]
-#         y = location[1]
-
-
-#         google_maps_url = f'https://www.google.com/maps/dir/?api=1&origin={x},{y}'
-#         trip_data = {
-#             "trip_id": trip_id,
-#             "trip_name": user["trip_name"],
-#             "start_date": user["start_date"],
-#             "end_date": user["end_date"],
-#             "days": user["days"],
-#             "email": user["email"],
-#             "budget": user["budget"],
-#             "address": user["address"],
-#             "date_info": user["date_info"]
-#         }
-        
-        # mycol = db['apptrip_futuretrips']
-        # user2 = mycol.find_one({'user_id': str(user_id), 'trip_id': str(trip_id)})
-#         enddate = user2['enddate']
-#         middledate = user2['middledate']
-#         startdate = user2['startdate']
-       
-#         # Get start date locations
-
-
-#         startdate_locations = []
-#         for date, place_info in startdate.items():
-#             for visit in place_info['Place of Visit']:
-#                 placename = visit['name']
-#                 latitude = visit['location'][0]
-#                 longitude = visit['location'][1]
-#                 google_maps_url = f'https://www.google.com/maps/dir/?api=1&origin={latitude},{longitude}'
-#                 response_1 = {
-#                 'date': date,
-#                 'name': placename,
-#                 'budget':visit['budget'],
-#                 'location': google_maps_url
-#                 }
-#                 startdate_locations.append(response_1)
-
-
-        
-#         for date, place_info in middledate.items():
-#             for visit in place_info['Place of Visit']:
-#                 placename = visit['name']
-#                 la_1 = visit['location'][0]
-#                 lo_1 = visit['location'][1]
-#                 google_maps_url = f'https://www.google.com/maps/dir/?api=1&origin={la_1},{lo_1}'
-#                 response_2 = {
-#                 'date': date,
-#                 'name': placename,
-#                 'budget':visit['budget'],
-#                 'location': google_maps_url
-#                 }
-        
-#         # Get end date locations
-#         enddate_locations = []
-#         for date, place_info in enddate.items():
-#             for visit in place_info['Place of Visit']:
-#                 placename = visit['name']
-#                 la = visit['location'][0]
-#                 lo = visit['location'][1]
-#                 google_maps_url = f'https://www.google.com/maps/dir/?api=1&origin={la},{lo}'
-#                 response_3 = {
-#                 'date': date,
-#                 'name': placename,
-#                 'budget':visit['budget'],
-#                 'location': google_maps_url
-#             }
-#         response = {
-#             'main_location': google_maps_url,
-#             'startdate': response_1,
-#             'middledate':response_2,
-#             'enddate': response_3
-#         }
-
-#         return Response({
-#             "message": "get the data successfully",
-#             "user": trip_data,
-#             **response
-#         }, status=200)
 
 
 
