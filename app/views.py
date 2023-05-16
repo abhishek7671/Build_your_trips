@@ -63,6 +63,7 @@ class LoginView(APIView):
                     "status": "success",
                     "msg": "user successfully authenticated",
                     "token": access_token,
+                    "user_id": str(user._id),
                     "refresh_token": refresh_token,
                 })
         else:
