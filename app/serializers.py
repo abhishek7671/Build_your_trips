@@ -1,7 +1,6 @@
 from rest_framework import  serializers
 from rest_framework import exceptions
 from django.contrib.auth import authenticate
-
 from .models import USER_details
 
 
@@ -33,5 +32,8 @@ class LoginSerializer(serializers.Serializer):
             msg = "User name and password not empty"
             raise exceptions.ValidationError(msg)
         return data
+    
+
+
 
 

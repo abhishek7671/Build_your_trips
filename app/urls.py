@@ -20,8 +20,10 @@ schema_view = get_schema_view(
 
 urlpatterns = [
 
-    path(r'register',Register.as_view(),name='register'),
-    path(r'login',LoginView.as_view(),name='register'),
-    path('change',ChangePassword.as_view()),
+   path(r'register',Register.as_view(),name='register'),
+   path(r'login',LoginView.as_view(),name='register'),
+   path('change',ChangePassword.as_view()),
+   # path(r'logout',Logout.as_view()),
+
     
 ]

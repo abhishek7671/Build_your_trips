@@ -13,7 +13,11 @@ from django.contrib.auth.hashers import make_password, check_password
 from .models import USER_details
 from .backend import EmailBackend
 from rest_framework.generics import CreateAPIView
-
+from rest_framework_jwt.blacklist.views import BlacklistView
+from rest_framework_jwt.authentication import JSONWebTokenAuthentication
+from rest_framework.permissions import IsAuthenticated
+from rest_framework_jwt.views import verify_jwt_token
+from .permissions import CustomIsauthenticated
 logger = logging.getLogger("django_service.service.views")
 
 JWT_SECRET_KEY = 'django-insecure-6i9o@jxm94t!sao=x%*6yhx9fyht^62ir(wzw5sre^*a%lk02'
@@ -21,6 +25,25 @@ JWT_ACCESS_TOKEN_EXPIRATION = 60
 JWT_REFRESH_TOKEN_EXPIRATION = 1440
 JWT_ALGORITHM = 'HS256'
 
+def get_token_for_user(user):
+    token_payload = {
+                'user_id': str(user._id),
+                'exp': datetime.utcnow() + timedelta(minutes=JWT_ACCESS_TOKEN_EXPIRATION),
+                'iat': datetime.utcnow()
+                }
+    access_token = jwt.encode(token_payload, JWT_SECRET_KEY, JWT_ALGORITHM)
+
+    refresh_token_payload = {
+                'user_id': str(user._id),
+                'exp': datetime.utcnow() + timedelta(days=JWT_REFRESH_TOKEN_EXPIRATION),
+                'iat': datetime.utcnow()
+                }
+    refresh_token = jwt.encode(refresh_token_payload, JWT_SECRET_KEY, JWT_ALGORITHM)
+    return {
+        'access':access_token,
+        'refresh':refresh_token
+
+    }
 class Register(APIView):
     def post(self, request, format=None):
         serializer = USER_Serializer(data=json.loads(request.body))
@@ -45,26 +68,13 @@ class LoginView(APIView):
         password = data.get('password',None)
         user=EmailBackend.authenticate(self, request, username=email, password=password)
         if user is not None:
-            token_payload = {
-                'user_id': str(user._id),
-                'exp': datetime.utcnow() + timedelta(minutes=JWT_ACCESS_TOKEN_EXPIRATION),
-                'iat': datetime.utcnow()
-                }
-            access_token = jwt.encode(token_payload, JWT_SECRET_KEY, JWT_ALGORITHM)
-
-            refresh_token_payload = {
-                'user_id': str(user._id),
-                'exp': datetime.utcnow() + timedelta(days=JWT_REFRESH_TOKEN_EXPIRATION),
-                'iat': datetime.utcnow()
-                }
-            refresh_token = jwt.encode(refresh_token_payload, JWT_SECRET_KEY, JWT_ALGORITHM)
+            token=get_token_for_user(user)
 
             return JsonResponse({
                     "status": "success",
                     "msg": "user successfully authenticated",
-                    "token": access_token,
+                    "token": token,
                     "user_id": str(user._id),
-                    "refresh_token": refresh_token,
                 })
         else:
             return JsonResponse({"message":"invalid data"})
@@ -87,4 +97,10 @@ class ChangePassword(CreateAPIView):
         user_obj.password=make_password(newpassword)
         user_obj.save()
         return Response({'success': 'Password changed successfully'}, status=status.HTTP_200_OK)
+    
+
+
+
+
+
 
