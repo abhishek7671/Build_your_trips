@@ -13,11 +13,7 @@ from django.contrib.auth.hashers import make_password, check_password
 from .models import USER_details
 from .backend import EmailBackend
 from rest_framework.generics import CreateAPIView
-from rest_framework_jwt.blacklist.views import BlacklistView
-from rest_framework_jwt.authentication import JSONWebTokenAuthentication
-from rest_framework.permissions import IsAuthenticated
-from rest_framework_jwt.views import verify_jwt_token
-from .permissions import CustomIsauthenticated
+
 logger = logging.getLogger("django_service.service.views")
 
 JWT_SECRET_KEY = 'django-insecure-6i9o@jxm94t!sao=x%*6yhx9fyht^62ir(wzw5sre^*a%lk02'
