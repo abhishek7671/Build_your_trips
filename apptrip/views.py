@@ -419,78 +419,107 @@ class ExpenseAPIView(APIView):
 
 
 
-from bson import ObjectId
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from pymongo import MongoClient
 
-client = MongoClient('mongodb://localhost:27017')
-data = client['santhosh']
-database = data['apptrip_mymodel']
+class DifferenceAPIView(APIView):
+    def get(self, request, trip_id):
+      
+        expense_data = database.find_one({'trip_id': trip_id})
 
-class ExpenseView(APIView):
-    def get(self, request, expenses_id):
-    
-        try :
-            expense_data = database.find_one({'expenses_id': expenses_id})
-            if expense_data:
-                
-                expense_data.pop('_id')
-                return Response(expense_data)
-            else:
-                return Response({'message': 'Expense data not found'}, status=404)
-        except Exception as e:
-            print(f"Error retrieving document: {e}")
-            return Response({'message': 'Internal server error'}, status=500)
+        if expense_data:
+           
+            expense_data['_id'] = str(expense_data['_id'])
+            return Response(expense_data)
+        else:
+            return Response({'message': 'Expense data not found'}, status=404)
 
 
 
-class ExpenseAPView(APIView):
-    
-
+class DifferenceAPI(APIView):
     def get(self, request, trip_id, expense_id):
         try:
-            expense_data = database.find_one({'expenses_id': expense_id})
-            if expense_data is None:
-                return Response({'message': 'Expense not found'}, status=404)
-
-            
-            expense_data['_id'] = str(expense_data['_id'])
-
-            return Response(expense_data)
+            result = database.find_one({'trip_id': trip_id, 'expense_id': expense_id})
+            if result:
+                
+                result['_id'] = str(result['_id'])
+                return Response(result)
+            else:
+                return Response({'message': 'Expense not found.'}, status=404)
         except Exception as e:
-            return Response({'message': str(e)}, status=500)
+            print(f"Error retrieving document: {e}")
+            return Response({'message': 'Failed to retrieve data from the database.'}, status=500)
+
+
+
+
+
+    
+
+
+
+
+
+# from bson import ObjectId
+# from rest_framework.views import APIView
+# from rest_framework.response import Response
+# from pymongo import MongoClient
+
+# client = MongoClient('mongodb://localhost:27017')
+# data = client['santhosh']
+# database = data['apptrip_mymodel']
+
+# class ExpenseView(APIView):
+#     def get(self, request, expenses_id):
+    
+#         try :
+#             expense_data = database.find_one({'expenses_id': expenses_id})
+#             if expense_data:
+                
+#                 expense_data.pop('_id')
+#                 return Response(expense_data)
+#             else:
+#                 return Response({'message': 'Expense data not found'}, status=404)
+#         except Exception as e:
+#             print(f"Error retrieving document: {e}")
+#             return Response({'message': 'Internal server error'}, status=500)
 
 
 
 
 
 
+# from rest_framework.views import APIView
+# from rest_framework.response import Response
+# from pymongo import MongoClient
 
+# client = MongoClient('mongodb://localhost:27017')
+# data = client['santhosh']
+# database = data['apptrip_mymodel']
 
+# class ExpenseDetailAPIView(APIView):
+#     def get(self, request, trip_id, expenses_id):  # Corrected argument name to 'expenses_id'
+#         try:
+#             # Find the document based on trip_id and expenses_id
+#             document = database.find_one({'trip_id': trip_id, 'expenses_id': expenses_id})
 
+#             if document:
+#                 # Extract the relevant data
+#                 expenses_details = document.get('expenses_details', [])
+#                 total_expenses_details = document.get('total_expenses_details', [])
 
+#                 response_data = {
+#                     'message': 'Data retrieved successfully',
+#                     'expenses_details': expenses_details,
+#                     'total_expenses_details': total_expenses_details,
+#                 }
+#                 return Response(response_data)
+#             else:
+#                 response_data = {'message': 'Data not found'}
+#                 return Response(response_data, status=404)
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+#         except Exception as e:
+#             print(f"Error retrieving document: {e}")
+#             response_data = {'message': 'An error occurred while retrieving data'}
+#             return Response(response_data, status=500)
 
 
 
@@ -552,24 +581,43 @@ class complete_expense(APIView):
         return Response('success')
 
 
-class Getexpenses(APIView):
+
+class ExpensesAPI(APIView):
+    def get(self, request, trip_id):
+        try:
+            expenses = database.find({'trip_id': trip_id})
+        except Exception as e:
+            print(f"Error retrieving data: {e}")
+            return Response({'message': 'Failed to retrieve data from the database.'}, status=500)
+
+        if expenses:
+            response_data = []
+            for expense in expenses:
+                response_data.append({
+                    'expense_id': expense['expense_id'],
+                    'expenses_details': expense['expenses_details'],
+                })
+            return Response(response_data)
+        else:
+            return Response({'message': 'No expenses found for the given trip_id.'}, status=404)
+
+
+
+
+class GetExpenseAPI(APIView):
     def get(self, request, trip_id, expense_id):
         try:
-            query = {
-                'trip_id': trip_id,
-                'expense_id': expense_id,
-            }
-            result = database.find_one(query)
-            
+            result = database.find_one({'trip_id': trip_id, 'expense_id': expense_id})
             if result:
                 
                 result['_id'] = str(result['_id'])
                 return Response(result)
             else:
-                return Response({'message': 'Data not found.'}, status=404)
+                return Response({'message': 'Expense not found.'}, status=404)
         except Exception as e:
             print(f"Error retrieving document: {e}")
             return Response({'message': 'Failed to retrieve data from the database.'}, status=500)
+
 
 
 

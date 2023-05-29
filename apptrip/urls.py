@@ -21,14 +21,15 @@ urlpatterns = [
     path('future/<str:user_id>/<str:trip_id>/',views.Future.as_view()),
     path('amount_post/',views.AverageAmountView_post),
     path('date',views.ExpenseAPIView.as_view()),
-    path('get/<str:expenses_id>/',views.ExpenseView.as_view()),
-    path('get/<str:trip_id>/<str:expense_id>/', views.ExpenseAPView.as_view()),
-
+    path('Diff_tripid/<str:trip_id>/',views.DifferenceAPIView.as_view()),
+    path('DifferenceAPI/<str:trip_id>/<str:expense_id>/',views.DifferenceAPI.as_view()),
+    
 
 
     path('dummy',views.PostcallAPI.as_view()),
     path('dumm',views.complete_expense.as_view()),
-    path('get/<str:trip_id>/<str:expense_id>/',views.Getexpenses.as_view()),
+    path('ExpensesAPI_tripid/<str:trip_id>/',views.ExpensesAPI.as_view()),
+    path('GetCallAPI/<str:trip_id>/<str:expense_id>/',views.GetExpenseAPI.as_view()),
     
     
     
