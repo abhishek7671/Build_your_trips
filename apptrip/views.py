@@ -10,6 +10,8 @@ from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 from django.http import Http404
 import uuid
+from django.utils.decorators import method_decorator
+from app.utils import token_required
 
 from app.permissions import CustomIsauthenticated
 
@@ -21,6 +23,7 @@ mydb = db['apptrip_pasttravelledtrips']
 
 class Ptrip(APIView):
     permission_classes = [CustomIsauthenticated]
+    @method_decorator(token_required)
     def post(self, request, format=None):
         user_ids=str(request.user._id)
         trip_id= str(uuid.uuid4())
@@ -66,7 +69,7 @@ class Past_User_id(APIView):
 
 class Past(APIView):
     permission_classes = [CustomIsauthenticated]
-
+    @method_decorator(token_required)
     def get(self, request, user_id, trip_id):
         db_client = MongoClient('mongodb://localhost:27017')
         db = db_client['santhosh']
@@ -125,6 +128,7 @@ mycol = db['apptrip_futuretrips']
 
 class Create_Travel(APIView):
     permission_classes = [CustomIsauthenticated]
+    @method_decorator(token_required)
     def post(self, request, format=None):
         user_ids=str(request.user._id)
         trip_id= str(uuid.uuid4())
@@ -164,7 +168,7 @@ from django.http import Http404
 
 class Future(APIView):
     permission_classes = [CustomIsauthenticated]
-
+    @method_decorator(token_required)
     def get(self, request, user_id, trip_id):
         db_client = MongoClient('mongodb://localhost:27017')
         db = db_client['santhosh']
@@ -223,52 +227,6 @@ class Future_User_id(APIView):
             return Response(serializer.data, status=status.HTTP_200_OK)
         except FutureTrips.DoesNotExist:
             return Response({"Message": "User not found."}, status=status.HTTP_404_NOT_FOUND)
-
-
-@api_view(['POST'])
-def AverageAmountView_post(request):
-    serializer = Aserializer(data=request.data)
-    serializer.is_valid(raise_exception=True)
-    serializer.save()
-    budget_details = serializer.validated_data['budget_details']
-    
-    response_data = []
-
-    for detail in budget_details:
-        # day = detail.get('day',None)
-        day_budget = detail.get('day_budget', None)
-        date = detail.get('date', None)
-        names = detail.get('name', [])
-        amounts = detail.get('amount', [])
-        total_amount = sum(amounts)
-        average = total_amount / len(names)
-
-        data = {
-            # 'day':day,
-            'day_budget': day_budget,
-            'date': date,
-            'average': average,
-        }
-
-        for i, name in enumerate(names):
-            contribution = amounts[i]
-            difference = contribution - average
-
-            data[f'{name}_contributed'] = contribution
-            data[f'{name}_difference'] = difference
-
-        response_data.append(data)
-
-    response = {
-        'message': 'data posted successfully',
-        'data': response_data,
-    }
-
-    return Response(response)
-
-
-
-
 
 
 
@@ -416,7 +374,6 @@ def calculate_totals(expenses_id, expenses):
             modified_contributors[f'total_{contributor_name}_difference'] = contributor_difference
 
     response_data = [modified_contributors]
-
     return response_data
 
 
