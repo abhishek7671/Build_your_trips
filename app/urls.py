@@ -1,6 +1,6 @@
 from django.urls import include, path
 from rest_framework import routers
-from .views import  Register,LoginView,ChangePassword
+from .views import  Register,LoginView,ChangePassword,ForgotPassword,LogoutView
 from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
 from rest_framework import permissions
@@ -22,8 +22,9 @@ urlpatterns = [
 
    path(r'register',Register.as_view(),name='register'),
    path(r'login',LoginView.as_view(),name='register'),
-   path('change',ChangePassword.as_view()),
-   # path(r'logout',Logout.as_view()),
+   path('changepassword',ChangePassword.as_view()),
+   path('forgotpassword',ForgotPassword.as_view()),
+   path('logout',LogoutView.as_view()),
 
     
 ]
