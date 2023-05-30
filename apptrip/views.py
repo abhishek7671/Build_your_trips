@@ -270,260 +270,6 @@ def AverageAmountView_post(request):
 
 
 
-# tfyufgcghuytfgcuyiuhcuyfgcvhuoiuhhuyoihuyghvbvuyhbiyfgxcvkuyrdrsxvbbjhytrdfgxcbv btrdxcvfftyh
-
-
-# from rest_framework.views import APIView
-# from rest_framework.response import Response
-# import uuid
-# from pymongo import MongoClient
-
-# client = MongoClient('mongodb://localhost:27017')
-# data = client['santhosh']
-# database = data['apptrip_mymodel']
-
-# class ExpenseAPIView(APIView):
-#     def post(self, request):
-#         expenses = request.data.get('expenses_details', [])
-#         result = []
-#         unique_dates = set()
-
-#         for expense in expenses:
-#             date = expense['date']
-#             if date in unique_dates:
-#                 continue
-#             unique_dates.add(date)
-
-#             total_amount = sum(expense['amount'] for expense in expenses if expense['date'] == date)
-#             count = len([expense for expense in expenses if expense['date'] == date])
-#             average = total_amount / count if count > 0 else 0
-
-#             contributions = {}
-#             differences = {}
-#             individuals = set(expense['name'] for expense in expenses)
-#             for individual in individuals:
-#                 contributions[individual] = sum(expense['amount'] for expense in expenses if expense['date'] == date and expense['name'] == individual)
-#                 differences[individual] = contributions[individual] - average
-
-#             expense_data = {
-#                 'date': date,
-#                 'total_amount': str(total_amount),
-#                 'average': float(average),
-#                 **{f'{name}_contributed': contributions.get(name, 0) for name in individuals},
-#                 **{f'{name}_difference': differences.get(name, -average) for name in individuals},
-#             }
-#             result.append(expense_data)
-
-#             expense_id = str(uuid.uuid4())
-
-#         response_data = {
-#             'message': 'Data posted successfully',
-#             'expenses_details': result,
-#             'expenses_id': str(expense_id),  # Convert expense_id to string
-#         }
-
-#         try:
-            
-#             database.insert_one(response_data.copy())
-#         except Exception as e:
-#             print(f"Error inserting document: {e}")
-
-#         return Response(response_data)
-
-
-# class ExpenseView(APIView):
-#     def get(self, request, expenses_id):
-#         try:
-           
-#             document = database.find_one({'expenses_id': expenses_id})
-#             if document:
-#                 document.pop('_id')
-#                 return Response(document)
-#             else:
-#                 return Response({'message': 'Expense not found'}, status=404)
-#         except Exception as e:
-#             return Response({'message': f'Error retrieving expense: {e}'}, status=500)
-
-
-# awsedrfguirdfghiutrsgdfkuiluuyetrtyuiotrydfsguyirtdfguytersfgxchjliutuydgfckyyrtdfchkjyutgdtrtdfrtf56rtfgr67ftg5rtfgrtfcvrtfgcvytfgcvtyfg
-
-
-
-
-from rest_framework.views import APIView
-from rest_framework.response import Response
-import uuid
-from pymongo import MongoClient
-
-client = MongoClient('mongodb://localhost:27017')
-data = client['santhosh']
-database = data['apptrip_mymodel']
-
-class ExpenseAPIView(APIView):
-    def post(self, request):
-        expenses = request.data.get('expenses_details', [])
-        result = []
-        unique_dates = set()
-
-        for expense in expenses:
-            date = expense['date']
-            if date in unique_dates:
-                continue
-            unique_dates.add(date)
-
-            total_amount = sum(expense['amount'] for expense in expenses if expense['date'] == date)
-            count = len([expense for expense in expenses if expense['date'] == date])
-            average = total_amount / count if count > 0 else 0
-
-            contributions = {}
-            differences = {}
-            individuals = set(expense['name'] for expense in expenses)
-            for individual in individuals:
-                contributions[individual] = sum(expense['amount'] for expense in expenses if expense['date'] == date and expense['name'] == individual)
-                differences[individual] = contributions[individual] - average
-
-            expense_data = {
-                'date': date,
-                'total_amount': str(total_amount),
-                'average': float(average),
-                **{f'{name}_contributed': contributions.get(name, 0) for name in individuals},
-                **{f'{name}_difference': differences.get(name, -average) for name in individuals},
-            }
-            result.append(expense_data)
-
-        total_expenses = {
-            'total_budget': str(sum(expense['amount'] for expense in expenses)),
-            'total_average': float(sum(expense['amount'] for expense in expenses) / len(expenses)) if len(expenses) > 0 else 0,
-            **{f'total_{name}_contributed': sum(expense['amount'] for expense in expenses if expense['name'] == name) for name in individuals},
-            **{f'total_{name}_difference': sum(expense['amount'] for expense in expenses if expense['name'] == name) - (sum(expense['amount'] for expense in expenses) / len(expenses)) if len(expenses) > 0 else 0 for name in individuals},
-        }
-
-        expense_id = str(uuid.uuid4())
-
-        response_data = {
-            'message': 'Data posted successfully',
-            'expenses_details': result,
-            'expenses_id': expense_id,
-            'total_expenses_details': [total_expenses],
-        }
-
-        try:
-            database.insert_one(response_data.copy())
-        except Exception as e:
-            print(f"Error inserting document: {e}")
-
-        return Response(response_data)
-
-
-
-
-
-
-
-class DifferenceAPIView(APIView):
-    def get(self, request, trip_id):
-      
-        expense_data = database.find_one({'trip_id': trip_id})
-
-        if expense_data:
-           
-            expense_data['_id'] = str(expense_data['_id'])
-            return Response(expense_data)
-        else:
-            return Response({'message': 'Expense data not found'}, status=404)
-
-
-
-class DifferenceAPI(APIView):
-    def get(self, request, trip_id, expense_id):
-        try:
-            result = database.find_one({'trip_id': trip_id, 'expense_id': expense_id})
-            if result:
-                
-                result['_id'] = str(result['_id'])
-                return Response(result)
-            else:
-                return Response({'message': 'Expense not found.'}, status=404)
-        except Exception as e:
-            print(f"Error retrieving document: {e}")
-            return Response({'message': 'Failed to retrieve data from the database.'}, status=500)
-
-
-
-
-
-    
-
-
-
-
-
-# from bson import ObjectId
-# from rest_framework.views import APIView
-# from rest_framework.response import Response
-# from pymongo import MongoClient
-
-# client = MongoClient('mongodb://localhost:27017')
-# data = client['santhosh']
-# database = data['apptrip_mymodel']
-
-# class ExpenseView(APIView):
-#     def get(self, request, expenses_id):
-    
-#         try :
-#             expense_data = database.find_one({'expenses_id': expenses_id})
-#             if expense_data:
-                
-#                 expense_data.pop('_id')
-#                 return Response(expense_data)
-#             else:
-#                 return Response({'message': 'Expense data not found'}, status=404)
-#         except Exception as e:
-#             print(f"Error retrieving document: {e}")
-#             return Response({'message': 'Internal server error'}, status=500)
-
-
-
-
-
-
-# from rest_framework.views import APIView
-# from rest_framework.response import Response
-# from pymongo import MongoClient
-
-# client = MongoClient('mongodb://localhost:27017')
-# data = client['santhosh']
-# database = data['apptrip_mymodel']
-
-# class ExpenseDetailAPIView(APIView):
-#     def get(self, request, trip_id, expenses_id):  # Corrected argument name to 'expenses_id'
-#         try:
-#             # Find the document based on trip_id and expenses_id
-#             document = database.find_one({'trip_id': trip_id, 'expenses_id': expenses_id})
-
-#             if document:
-#                 # Extract the relevant data
-#                 expenses_details = document.get('expenses_details', [])
-#                 total_expenses_details = document.get('total_expenses_details', [])
-
-#                 response_data = {
-#                     'message': 'Data retrieved successfully',
-#                     'expenses_details': expenses_details,
-#                     'total_expenses_details': total_expenses_details,
-#                 }
-#                 return Response(response_data)
-#             else:
-#                 response_data = {'message': 'Data not found'}
-#                 return Response(response_data, status=404)
-
-#         except Exception as e:
-#             print(f"Error retrieving document: {e}")
-#             response_data = {'message': 'An error occurred while retrieving data'}
-#             return Response(response_data, status=500)
-
-
-
-
 
 
 
@@ -538,10 +284,11 @@ database = data['spent_amount']
 
 class PostcallAPI(APIView):
     def post(self, request):
-        trip_id = request.data.get('trip_id')
-        expenses = request.data.get('expenses_details', [])
-
+        data = request.data
+        trip_id = data.get('trip_id')
+        expenses = data.get('expenses_details', [])
         expense_id = str(uuid.uuid4())
+
         request_data = {
             'trip_id': trip_id,
             'expense_id': expense_id,
@@ -553,32 +300,23 @@ class PostcallAPI(APIView):
         }
 
         try:
-            database.insert_one(request_data)
+            if 'expenses_id' in data and 'expenses_details' in data:
+                database.update(
+                    {'expense_id': data['expenses_id']},
+                    {
+                        '$push': {'expenses_details': {'$each': data['expenses_details']}},
+                    }
+                )
+                return Response('success')
+            else:
+                database.insert_one(request_data)
         except Exception as e:
-            print(f"Error inserting document: {e}")
-            return Response({'message': 'Failed to store data in the database.'}, status=500)
+            print(f"Error interacting with database: {e}")
+            return Response({'message': 'Failed to store/update data in the database.'}, status=500)
 
         return Response(response_data)
 
 
-class complete_expense(APIView):
-    def post(self, request):
-        data = request.data
-        expenses_id = data['expenses_id']
-        expenses_details = data['expenses_details']
-
-        try:
-            database.update(
-                {'expense_id': expenses_id},
-                {
-                    '$push': {'expenses_details': {'$each': expenses_details}},
-                }
-            )
-        except Exception as e:
-            print(f"Error updating document: {e}")
-            return Response({'message': 'Failed to update data in the database.'}, status=500)
-
-        return Response('success')
 
 
 
@@ -625,63 +363,61 @@ class GetExpenseAPI(APIView):
 
 
 
+class RetrieveExpenses(APIView):
+    def post(self, request):
+        expenses_id = request.data.get('expenses_id')
+
+        try:
+            result = database.find_one({'expense_id': expenses_id}, {'_id': 0})
+        except Exception as e:
+            print(f"Error retrieving document: {e}")
+            return Response({'message': 'Failed to retrieve data from the database.'}, status=500)
+
+        if not result:
+            return Response({'message': 'Expense ID not found.'}, status=404)
+
+        total_expenses_details = calculate_totals(expenses_id, result['expenses_details'])
+
+        response_data = {
+            'expenses_id': expenses_id,
+            'total_expenses_details': total_expenses_details,
+        }
+
+        return Response(response_data)
 
 
+def calculate_totals(expenses_id, expenses):
+    contributors = {}
+    total_budget = 0
 
+    for expense in expenses:
+        amount = expense.get('amount', 0)
+        contributors.setdefault('total_budget', 0)
+        contributors['total_budget'] += amount
+        total_budget += amount
 
+        contributor_name = expense.get('name')
+        if contributor_name:
+            contributors.setdefault(f'total_{contributor_name}_contributed', 0)
+            contributors[f'total_{contributor_name}_contributed'] += amount
 
+    contributors['total_average'] = total_budget / len(expenses)
 
+    modified_contributors = {
+        'total_budget': contributors['total_budget'],
+        'total_average': contributors['total_average']
+    }
 
+    for contributor in contributors:
+        if contributor not in ('total_budget', 'total_average'):
+            contributor_name = contributor.split('_')[1]
+            contributor_difference = contributors[contributor] - contributors['total_average']
+            modified_contributors[f'total_{contributor_name}_contributed'] = contributors[contributor]
+            modified_contributors[f'total_{contributor_name}_difference'] = contributor_difference
 
+    response_data = [modified_contributors]
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-        
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    return response_data
 
 
 
