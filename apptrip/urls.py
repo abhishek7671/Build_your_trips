@@ -16,20 +16,14 @@ urlpatterns = [
     path(r'CompleteTrip',views.CompleteTrip.as_view()),
    
     path(r'futureuser/<str:user_id>',views.Future_User_id.as_view()),
-    
-    
     path('future/<str:user_id>/<str:trip_id>/',views.Future.as_view()),
     path('amount_post/',views.AverageAmountView_post),
-    path('date',views.ExpenseAPIView.as_view()),
-    path('Diff_tripid/<str:trip_id>/',views.DifferenceAPIView.as_view()),
-    path('DifferenceAPI/<str:trip_id>/<str:expense_id>/',views.DifferenceAPI.as_view()),
     
 
-
-    path('dummy',views.PostcallAPI.as_view()),
-    path('dumm',views.complete_expense.as_view()),
+    path(r'update/',views.PostcallAPI.as_view()),
     path('ExpensesAPI_tripid/<str:trip_id>/',views.ExpensesAPI.as_view()),
     path('GetCallAPI/<str:trip_id>/<str:expense_id>/',views.GetExpenseAPI.as_view()),
+    path('summary',views.RetrieveExpenses.as_view()),
     
     
     
