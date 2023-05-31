@@ -22,7 +22,11 @@ urlpatterns = [
     path(r'Budgetpostcall/',views.PostcallAPI.as_view()),
     path('ExpensesAPI_tripid/<str:trip_id>/',views.ExpensesAPI.as_view()),
     path('GetCallAPI/<str:trip_id>/<str:expense_id>/',views.GetExpenseAPI.as_view()),
+
+
     path('SplitAmount',views.RetrieveExpenses.as_view()),
+    path('retrieve-Tripid/<str:trip_id>/',views.Retrievegetcall.as_view()),
+    path('retrieve-expenseid/<str:trip_id>/<str:expense_id>/',views.RetrieveExpenseid.as_view()),
     
     
     

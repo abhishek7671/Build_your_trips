@@ -24,7 +24,6 @@ class CustomIsauthenticated(IsAuthenticated):
             auth_header = request.headers['Authorization']
             token = auth_header.split(' ')[1]
             payload = jwt.decode(token, JWT_SECRET_KEY, algorithms=[JWT_ALGORITHM])
-
             user = USER_details.objects.get(_id=ObjectId(payload['user_id']))
             return Response(payload)
 

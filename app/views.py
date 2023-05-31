@@ -18,11 +18,12 @@ from app.permissions import CustomIsauthenticated
 from django.core.mail import send_mail
 from django.core.mail import EmailMessage
 
+from app.authentication import JWTAuthentication
 from pymongo import MongoClient
 myclient = MongoClient("mongodb://localhost:27017/")
 mydb = myclient['santhosh']
 mycol3 = mydb['app_user_details']
-mytokens=mydb['tokens']
+tokens=mydb['tokens']
 
 logger = logging.getLogger("django_service.service.views")
 
@@ -141,24 +142,27 @@ class ForgotPassword(APIView):
             return JsonResponse({"message":"invalid data"})
 
 
-class LogoutView(APIView): # logout function for normal user.
+
+class LogoutAll(APIView): # logout function for normal user.
     permission_classes = [CustomIsauthenticated]
+    authentication_classes = [JWTAuthentication]
     def post(self,request):
         user_id = request.user._id
         auth_header = request.headers.get('Authorization')
         a_token = auth_header.split()[1]
-        user_data = mytokens.find({})    
+        user_data = tokens.find({})  # here we are getting the all token collection iformation
         information=[]
         for info in user_data:
-            if ((datetime.utcnow() - info['created_date']).days) >=1: # if token created date greater than (datetime seconds to datetime day) we are removing the token from collection
+            if ((datetime.utcnow() - info['created_date']).days) >= 1: # if token created date greater than (datetime seconds to datetime day) we are removing the token from collection
                 information.append(info['_id'])
-                mytokens.remove({"_id":{"$in": information }}) # here we are using the in operator checking the in list of objects if time is greather then (datetime seconds to datetime day)
-                mytokens.update(
+        tokens.remove({"_id":{"$in": information }}) # here we are using the in operator checking the in list of objects if time is greather then (datetime seconds to datetime day)
+            
+        tokens.update(
                 {"user_id": str(user_id),"access_token":a_token},
                 {
                     "$set": {"active":False}
-                    }
-                    )
-
+                }
+            )
         return Response('Logout successfully')
+
 
