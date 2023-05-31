@@ -1,6 +1,5 @@
 from .serializers import Pserializer, FSerializer
 from .models import PastTravelledTrips, FutureTrips
-from rest_framework.decorators import api_view
 from rest_framework import status
 from bson import ObjectId
 from rest_framework.views import APIView
@@ -14,7 +13,6 @@ from django.utils.decorators import method_decorator
 from app.utils import token_required
 
 from app.permissions import CustomIsauthenticated
-from rest_framework .permissions import IsAuthenticated
 from pymongo import MongoClient
 client = MongoClient('mongodb://localhost:27017')
 db = client['santhosh']
@@ -322,7 +320,21 @@ class GetExpenseAPI(APIView):
             return Response({'message': 'Failed to retrieve data from the database.'}, status=500)
 
 
+from pymongo import MongoClient
+import json
+from bson import ObjectId
 
+# Initialize MongoDB client
+client = MongoClient()
+db = client['santhosh']
+collection = db['difference_amount']
+
+
+class JSONEncoder(json.JSONEncoder):
+    def default(self, o):
+        if isinstance(o, ObjectId):
+            return str(o)
+        return super().default(o)
 
 
 class RetrieveExpenses(APIView):
@@ -332,7 +344,7 @@ class RetrieveExpenses(APIView):
         expenses_id = request.data.get('expenses_id')
 
         try:
-            result = database.find_one({'trip_id':trip_id,'expense_id': expenses_id})   
+            result = database.find_one({'trip_id': trip_id, 'expense_id': expenses_id})   
         except Exception as e:
             print(f"Error retrieving document: {e}")
             return Response({'message': 'Failed to retrieve data from the database.'}, status=500)
@@ -347,7 +359,19 @@ class RetrieveExpenses(APIView):
             'total_expenses_details': total_expenses_details,
         }
 
+        try:
+            encoded_data = json.loads(json.dumps(response_data, cls=JSONEncoder))
+            result = collection.insert_one(encoded_data)
+            print(f"Data inserted successfully. Inserted ID: {result.inserted_id}")
+        except Exception as e:
+            print(f"Error inserting data into MongoDB: {e}")
+            return Response({'message': 'Failed to store data in the database.'}, status=500)
+
         return Response(response_data)
+
+
+
+
 
 def calculate_totals(expenses_id, expenses):
     contributors = {}
@@ -385,39 +409,15 @@ def calculate_totals(expenses_id, expenses):
 class Retrievegetcall(APIView):
     def get(self, request, trip_id):
         try:
-            result = database.find({'trip_id': trip_id})
-        except Exception as e:
-            print(f"Error retrieving documents: {e}")
-            return Response({'message': 'Failed to retrieve data from the database.'}, status=500)
-
-        if not result:
-            return Response({'message': 'No expenses found for the trip ID.'}, status=404)
-
-        expenses_data = []
-        for expense in result:
-            expenses_id = expense.get('expenses_id')
-            total_expenses_details = calculate_totals(expenses_id, expense['expenses_details'])
-
-            response_data = {
-                'expenses_id': expenses_id,
-                'total_expenses_details': total_expenses_details,
-            }
-            expenses_data.append(response_data)
-
-        return Response(expenses_data)
-
-
-class RetrieveExpenseid(APIView):
-    def get(self, request, trip_id, expenses_id):
-        try:
-            result = database.find_one({'trip_id': trip_id, 'expense_id': expenses_id}, {'_id': 0})
+            result = database.find_one({'trip_id': trip_id})
         except Exception as e:
             print(f"Error retrieving document: {e}")
             return Response({'message': 'Failed to retrieve data from the database.'}, status=500)
 
         if not result:
-            return Response({'message': 'Expense ID not found.'}, status=404)
+            return Response({'message': 'No expenses found for the trip ID.'}, status=404)
 
+        expenses_id = result.get('expense_id')
         total_expenses_details = calculate_totals(expenses_id, result['expenses_details'])
 
         response_data = {
@@ -426,3 +426,5 @@ class RetrieveExpenseid(APIView):
         }
 
         return Response(response_data)
+
+
