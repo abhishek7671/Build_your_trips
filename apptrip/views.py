@@ -10,8 +10,7 @@ from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 from django.http import Http404
 import uuid
-from django.utils.decorators import method_decorator
-from app.utils import token_required
+
 
 from app.permissions import CustomIsauthenticated
 
@@ -23,7 +22,6 @@ mydb = db['apptrip_pasttravelledtrips']
 
 class Ptrip(APIView):
     permission_classes = [CustomIsauthenticated]
-    @method_decorator(token_required)
     def post(self, request, format=None):
         user_ids=str(request.user._id)
         trip_id= str(uuid.uuid4())
@@ -69,7 +67,6 @@ class Past_User_id(APIView):
 
 class Past(APIView):
     permission_classes = [CustomIsauthenticated]
-    @method_decorator(token_required)
     def get(self, request, user_id, trip_id):
         db_client = MongoClient('mongodb://localhost:27017')
         db = db_client['santhosh']
@@ -128,7 +125,6 @@ mycol = db['apptrip_futuretrips']
 
 class Create_Travel(APIView):
     permission_classes = [CustomIsauthenticated]
-    @method_decorator(token_required)
     def post(self, request, format=None):
         user_ids=str(request.user._id)
         trip_id= str(uuid.uuid4())
@@ -168,7 +164,6 @@ from django.http import Http404
 
 class Future(APIView):
     permission_classes = [CustomIsauthenticated]
-    @method_decorator(token_required)
     def get(self, request, user_id, trip_id):
         db_client = MongoClient('mongodb://localhost:27017')
         db = db_client['santhosh']
@@ -343,66 +338,33 @@ class RetrieveExpenses(APIView):
 
         return Response(response_data)
 
-
 def calculate_totals(expenses_id, expenses):
     contributors = {}
     total_budget = 0
 
     for expense in expenses:
         amount = expense.get('amount', 0)
-        contributors.setdefault('total_budget', 0)
-        contributors['total_budget'] += amount
-        total_budget += amount
-
         contributor_name = expense.get('name')
-        if contributor_name:
-            contributors.setdefault(f'total_{contributor_name}_contributed', 0)
-            contributors[f'total_{contributor_name}_contributed'] += amount
 
-    contributors['total_average'] = total_budget / len(expenses)
+        if contributor_name:
+            contributors.setdefault(contributor_name, 0)
+            contributors[contributor_name] += amount
+            total_budget += amount
+
+    contributors_count = len(contributors)
+    contributors['total_budget'] = total_budget
+    contributors['total_average'] = total_budget / contributors_count
 
     modified_contributors = {
         'total_budget': contributors['total_budget'],
         'total_average': contributors['total_average']
     }
 
-    for contributor in contributors:
+    for contributor, amount in contributors.items():
         if contributor not in ('total_budget', 'total_average'):
-            contributor_name = contributor.split('_')[1]
-            contributor_difference = contributors[contributor] - contributors['total_average']
-            modified_contributors[f'total_{contributor_name}_contributed'] = contributors[contributor]
-            modified_contributors[f'total_{contributor_name}_difference'] = contributor_difference
+            contributor_difference = amount - contributors['total_average']
+            modified_contributors[f'total_{contributor}_contributed'] = amount
+            modified_contributors[f'total_{contributor}_difference'] = contributor_difference
 
     response_data = [modified_contributors]
     return response_data
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
