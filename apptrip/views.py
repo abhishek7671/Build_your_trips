@@ -1,4 +1,4 @@
-from .serializers import Pserializer, FSerializer,Aserializer
+from .serializers import Pserializer, FSerializer
 from .models import PastTravelledTrips, FutureTrips
 from rest_framework.decorators import api_view
 from rest_framework import status
@@ -14,20 +14,23 @@ from django.utils.decorators import method_decorator
 from app.utils import token_required
 
 from app.permissions import CustomIsauthenticated
-
+from rest_framework .permissions import IsAuthenticated
 from pymongo import MongoClient
 client = MongoClient('mongodb://localhost:27017')
 db = client['santhosh']
 mydb = db['apptrip_pasttravelledtrips']
 
 
+from app.authentication import JWTAuthentication
+
 class Ptrip(APIView):
+    authentication_classes = [JWTAuthentication]
     permission_classes = [CustomIsauthenticated]
     @method_decorator(token_required)
     def post(self, request, format=None):
-        user_ids=str(request.user._id)
-        trip_id= str(uuid.uuid4())
-        request.data.update({'user_id':user_ids,'trip_id':trip_id})
+        user_ids = str(request.user._id)
+        trip_id = str(uuid.uuid4())
+        request.data.update({'user_id': user_ids, 'trip_id': trip_id})
         serializer = Pserializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
@@ -39,6 +42,7 @@ class Ptrip(APIView):
             }
             return Response(response_data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
     
 
 class pasttrip(APIView):
@@ -69,6 +73,7 @@ class Past_User_id(APIView):
 
 class Past(APIView):
     permission_classes = [CustomIsauthenticated]
+    authentication_classes = [JWTAuthentication]
     @method_decorator(token_required)
     def get(self, request, user_id, trip_id):
         db_client = MongoClient('mongodb://localhost:27017')
@@ -128,6 +133,7 @@ mycol = db['apptrip_futuretrips']
 
 class Create_Travel(APIView):
     permission_classes = [CustomIsauthenticated]
+    authentication_classes = [JWTAuthentication]
     @method_decorator(token_required)
     def post(self, request, format=None):
         user_ids=str(request.user._id)
@@ -168,6 +174,7 @@ from django.http import Http404
 
 class Future(APIView):
     permission_classes = [CustomIsauthenticated]
+    authentication_classes = [JWTAuthentication]
     @method_decorator(token_required)
     def get(self, request, user_id, trip_id):
         db_client = MongoClient('mongodb://localhost:27017')
@@ -318,15 +325,14 @@ class GetExpenseAPI(APIView):
 
 
 
-
-
-
 class RetrieveExpenses(APIView):
     def post(self, request):
+        data = request.data
+        trip_id = data.get('trip_id')
         expenses_id = request.data.get('expenses_id')
 
         try:
-            result = database.find_one({'expense_id': expenses_id}, {'_id': 0})
+            result = database.find_one({'trip_id':trip_id,'expense_id': expenses_id})   
         except Exception as e:
             print(f"Error retrieving document: {e}")
             return Response({'message': 'Failed to retrieve data from the database.'}, status=500)
@@ -343,66 +349,80 @@ class RetrieveExpenses(APIView):
 
         return Response(response_data)
 
-
 def calculate_totals(expenses_id, expenses):
     contributors = {}
     total_budget = 0
 
     for expense in expenses:
         amount = expense.get('amount', 0)
-        contributors.setdefault('total_budget', 0)
-        contributors['total_budget'] += amount
-        total_budget += amount
-
         contributor_name = expense.get('name')
-        if contributor_name:
-            contributors.setdefault(f'total_{contributor_name}_contributed', 0)
-            contributors[f'total_{contributor_name}_contributed'] += amount
 
-    contributors['total_average'] = total_budget / len(expenses)
+        if contributor_name:
+            contributors.setdefault(contributor_name, 0)
+            contributors[contributor_name] += amount
+            total_budget += amount
+
+    contributors_count = len(contributors)
+    contributors['total_budget'] = total_budget
+    contributors['total_average'] = total_budget / contributors_count
 
     modified_contributors = {
         'total_budget': contributors['total_budget'],
         'total_average': contributors['total_average']
     }
 
-    for contributor in contributors:
+    for contributor, amount in contributors.items():
         if contributor not in ('total_budget', 'total_average'):
-            contributor_name = contributor.split('_')[1]
-            contributor_difference = contributors[contributor] - contributors['total_average']
-            modified_contributors[f'total_{contributor_name}_contributed'] = contributors[contributor]
-            modified_contributors[f'total_{contributor_name}_difference'] = contributor_difference
+            contributor_difference = amount - contributors['total_average']
+            modified_contributors[f'total_{contributor}_contributed'] = amount
+            modified_contributors[f'total_{contributor}_difference'] = contributor_difference
 
     response_data = [modified_contributors]
     return response_data
 
 
 
+class Retrievegetcall(APIView):
+    def get(self, request, trip_id):
+        try:
+            result = database.find({'trip_id': trip_id})
+        except Exception as e:
+            print(f"Error retrieving documents: {e}")
+            return Response({'message': 'Failed to retrieve data from the database.'}, status=500)
+
+        if not result:
+            return Response({'message': 'No expenses found for the trip ID.'}, status=404)
+
+        expenses_data = []
+        for expense in result:
+            expenses_id = expense.get('expenses_id')
+            total_expenses_details = calculate_totals(expenses_id, expense['expenses_details'])
+
+            response_data = {
+                'expenses_id': expenses_id,
+                'total_expenses_details': total_expenses_details,
+            }
+            expenses_data.append(response_data)
+
+        return Response(expenses_data)
 
 
+class RetrieveExpenseid(APIView):
+    def get(self, request, trip_id, expenses_id):
+        try:
+            result = database.find_one({'trip_id': trip_id, 'expense_id': expenses_id}, {'_id': 0})
+        except Exception as e:
+            print(f"Error retrieving document: {e}")
+            return Response({'message': 'Failed to retrieve data from the database.'}, status=500)
 
+        if not result:
+            return Response({'message': 'Expense ID not found.'}, status=404)
 
+        total_expenses_details = calculate_totals(expenses_id, result['expenses_details'])
 
+        response_data = {
+            'expenses_id': expenses_id,
+            'total_expenses_details': total_expenses_details,
+        }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+        return Response(response_data)
