@@ -24,7 +24,7 @@ from app.authentication import JWTAuthentication
 class Ptrip(APIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [CustomIsauthenticated]
-    # @method_decorator(token_required)
+    @method_decorator(token_required)
     def post(self, request, format=None):
         user_ids = str(request.user._id)
         trip_id = str(uuid.uuid4())
@@ -72,7 +72,7 @@ class Past_User_id(APIView):
 class Past(APIView):
     permission_classes = [CustomIsauthenticated]
     authentication_classes = [JWTAuthentication]
-    # @method_decorator(token_required)
+    @method_decorator(token_required)
     def get(self, request, user_id, trip_id):
         db_client = MongoClient('mongodb://localhost:27017')
         db = db_client['santhosh']
@@ -132,7 +132,7 @@ mycol = db['apptrip_futuretrips']
 class Create_Travel(APIView):
     permission_classes = [CustomIsauthenticated]
     authentication_classes = [JWTAuthentication]
-    # @method_decorator(token_required)
+    @method_decorator(token_required)
     def post(self, request, format=None):
         user_ids=str(request.user._id)
         trip_id= str(uuid.uuid4())
@@ -370,15 +370,12 @@ class RetrieveExpenses(APIView):
         return Response(response_data)
 
 
-
-
-
 def calculate_totals(expenses_id, expenses):
     contributors = {}
     total_budget = 0
 
     for expense in expenses:
-        amount = expense.get('amount', 0)
+        amount = int(expense.get('amount', 0))  
         contributor_name = expense.get('name')
 
         if contributor_name:
@@ -403,6 +400,8 @@ def calculate_totals(expenses_id, expenses):
 
     response_data = [modified_contributors]
     return response_data
+
+
 
 
 
