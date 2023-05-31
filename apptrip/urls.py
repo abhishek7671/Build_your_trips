@@ -27,9 +27,7 @@ urlpatterns = [
     path('SplitAmount',views.RetrieveExpenses.as_view()),
     path('retrieve-Tripid/<str:trip_id>/',views.Retrievegetcall.as_view()),
     # path('retrieve-expenseid/<str:trip_id>/<str:expense_id>/',views.RetrieveExpenseid.as_view()),
-    
-    
-    
+      
 ]
 
 
