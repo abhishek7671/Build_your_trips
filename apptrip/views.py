@@ -24,7 +24,7 @@ from app.authentication import JWTAuthentication
 class Ptrip(APIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [CustomIsauthenticated]
-    @method_decorator(token_required)
+    # @method_decorator(token_required)
     def post(self, request, format=None):
         user_ids = str(request.user._id)
         trip_id = str(uuid.uuid4())
@@ -72,7 +72,7 @@ class Past_User_id(APIView):
 class Past(APIView):
     permission_classes = [CustomIsauthenticated]
     authentication_classes = [JWTAuthentication]
-    @method_decorator(token_required)
+    # @method_decorator(token_required)
     def get(self, request, user_id, trip_id):
         db_client = MongoClient('mongodb://localhost:27017')
         db = db_client['santhosh']
@@ -132,7 +132,7 @@ mycol = db['apptrip_futuretrips']
 class Create_Travel(APIView):
     permission_classes = [CustomIsauthenticated]
     authentication_classes = [JWTAuthentication]
-    @method_decorator(token_required)
+    # @method_decorator(token_required)
     def post(self, request, format=None):
         user_ids=str(request.user._id)
         trip_id= str(uuid.uuid4())
@@ -173,7 +173,7 @@ from django.http import Http404
 class Future(APIView):
     permission_classes = [CustomIsauthenticated]
     authentication_classes = [JWTAuthentication]
-    @method_decorator(token_required)
+    # @method_decorator(token_required)
     def get(self, request, user_id, trip_id):
         db_client = MongoClient('mongodb://localhost:27017')
         db = db_client['santhosh']
