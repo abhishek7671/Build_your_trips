@@ -245,11 +245,13 @@ class PostcallAPI(APIView):
     def post(self, request):
         data = request.data
         trip_id = data.get('trip_id')
+        trip_members = data.get('trip_members', [])
         expenses = data.get('expenses_details', [])
         expense_id = str(uuid.uuid4())
 
         request_data = {
             'trip_id': trip_id,
+            'trip_members': trip_members,
             'expense_id': expense_id,
             'expenses_details': expenses,
         }
@@ -274,6 +276,7 @@ class PostcallAPI(APIView):
             return Response({'message': 'Failed to store/update data in the database.'}, status=500)
 
         return Response(response_data)
+
 
 
 
@@ -375,68 +378,53 @@ class GetExpenseAPI(APIView):
 
 
 
-
-
-
-
-from rest_framework.views import APIView
-from rest_framework.response import Response
-import uuid
-from pymongo import MongoClient
-
-client = MongoClient('mongodb://localhost:27017')
-data = client['santhosh']
-database = data['spent_amount']
-
-
-class RetrieveExpenses(APIView):
+class TotalExpensesAPI(APIView):
     def post(self, request):
         data = request.data
         trip_id = data.get('trip_id')
         expenses_id = data.get('expenses_id')
 
-        # Retrieve expenses details from MongoDB
-        expenses_data = database.find_one({'expense_id': expenses_id})
-        if not expenses_data:
-            return Response({'message': 'Expenses not found.'}, status=404)
+    
+        document = database.find_one({'trip_id': trip_id, 'expense_id': expenses_id})
 
-        trip_members = expenses_data.get('trip_members', [])
-        expenses_details = expenses_data.get('expenses_details', [])
+        if document:
+            trip_members = document.get('trip_members', [])
+            expenses_details = document.get('expenses_details', [])
 
-        # Check if trip_members is empty
-        if not trip_members:
-            return Response({'message': 'No trip members found.'}, status=400)
+            total_budget = 0
+            total_contributions = {member: 0 for member in trip_members}
 
-        # Calculate total budget and contributions for each member
-        total_budget = sum(int(expense['amount']) for expense in expenses_details)
-        total_average = total_budget / len(trip_members) if len(trip_members) > 0 else 0
+            for expense in expenses_details:
+                amount = int(expense.get('amount', 0))
+                total_budget += amount
+                contributors = expense.get('trip_members', [])
+                for contributor in contributors:
+                    total_contributions[contributor] += amount / len(contributors)
 
-        total_contributions = {member: 0 for member in trip_members}
-        for expense in expenses_details:
-            email = expense.get('email')
-            amount = int(expense.get('amount'))  # Convert amount to integer
-            if email in trip_members:
-                total_contributions[email] += amount
+            total_average = total_budget / len(trip_members)
+            total_expenses_details = []
 
-        # Calculate differences between contributions and average
-        total_differences = {member: total_contributions[member] - total_average for member in trip_members}
+            total_expense_details = {
+                'total_budget': total_budget,
+                'total_average': total_average,
+            }
 
-        # Prepare response data
-        response_data = {
-            'expenses_id': expenses_id,
-            'total_expenses_details': [
-                {
-                    'total_budget': total_budget,
-                    'total_average': total_average,
-                    f'total_{member.lower()}_contributed': total_contributions[member],
-                    f'total_{member.lower()}_difference': total_differences[member]
-                }
-                for member in trip_members
-            ]
-        }
+            for member in trip_members:
+                contribution = total_contributions[member]
+                difference = contribution - total_average
 
-        return Response(response_data)
+                total_expense_details[f'total_{member}_contributed'] = contribution
+                total_expense_details[f'total_{member}_difference'] = difference
 
+            total_expenses_details.append(total_expense_details)
+
+            response_data = {
+                'expenses_id': expenses_id,
+                'total_expenses_details': total_expenses_details,
+            }
+            return Response(response_data)
+        else:
+            return Response({'message': 'No data found for the given trip and expenses ID.'}, status=404)
 
 
       

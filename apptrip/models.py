@@ -29,7 +29,7 @@ class FutureTrips(models.Model):
     start_date  =models.DateField(null=True, blank=True) 
     end_date =models.DateField(null=True, blank=True)
     days= models.IntegerField()
-    email =  models.JSONField(default=None)
+    name =  models.JSONField(default=None)
     budget = models.IntegerField()
     address = models.CharField(max_length=200)
     location= models.JSONField(default=None)
