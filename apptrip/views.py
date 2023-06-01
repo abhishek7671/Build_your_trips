@@ -377,14 +377,13 @@ class GetExpenseAPI(APIView):
 
 
 
-
 class TotalExpensesAPI(APIView):
     def post(self, request):
         data = request.data
         trip_id = data.get('trip_id')
         expenses_id = data.get('expenses_id')
 
-    
+        # Fetch the document from the database
         document = database.find_one({'trip_id': trip_id, 'expense_id': expenses_id})
 
         if document:
@@ -398,8 +397,9 @@ class TotalExpensesAPI(APIView):
                 amount = int(expense.get('amount', 0))
                 total_budget += amount
                 contributors = expense.get('trip_members', [])
-                for contributor in contributors:
-                    total_contributions[contributor] += amount / len(contributors)
+                for contributor in trip_members:
+                    if contributor in contributors:
+                        total_contributions[contributor] += amount / len(contributors)
 
             total_average = total_budget / len(trip_members)
             total_expenses_details = []
