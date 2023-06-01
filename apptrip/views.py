@@ -24,7 +24,6 @@ from app.authentication import JWTAuthentication
 class Ptrip(APIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [CustomIsauthenticated]
-    @method_decorator(token_required)
     def post(self, request, format=None):
         user_ids = str(request.user._id)
         trip_id = str(uuid.uuid4())
@@ -72,7 +71,6 @@ class Past_User_id(APIView):
 class Past(APIView):
     permission_classes = [CustomIsauthenticated]
     authentication_classes = [JWTAuthentication]
-    @method_decorator(token_required)
     def get(self, request, user_id, trip_id):
         db_client = MongoClient('mongodb://localhost:27017')
         db = db_client['santhosh']
@@ -132,7 +130,6 @@ mycol = db['apptrip_futuretrips']
 class Create_Travel(APIView):
     permission_classes = [CustomIsauthenticated]
     authentication_classes = [JWTAuthentication]
-    @method_decorator(token_required)
     def post(self, request, format=None):
         user_ids=str(request.user._id)
         trip_id= str(uuid.uuid4())
@@ -173,7 +170,6 @@ from django.http import Http404
 class Future(APIView):
     permission_classes = [CustomIsauthenticated]
     authentication_classes = [JWTAuthentication]
-    # @method_decorator(token_required)
     def get(self, request, user_id, trip_id):
         db_client = MongoClient('mongodb://localhost:27017')
         db = db_client['santhosh']
@@ -249,11 +245,13 @@ class PostcallAPI(APIView):
     def post(self, request):
         data = request.data
         trip_id = data.get('trip_id')
+        trip_members = data.get('trip_members', [])
         expenses = data.get('expenses_details', [])
         expense_id = str(uuid.uuid4())
 
         request_data = {
             'trip_id': trip_id,
+            'trip_members': trip_members,
             'expense_id': expense_id,
             'expenses_details': expenses,
         }
@@ -278,6 +276,7 @@ class PostcallAPI(APIView):
             return Response({'message': 'Failed to store/update data in the database.'}, status=500)
 
         return Response(response_data)
+
 
 
 
@@ -320,86 +319,129 @@ class GetExpenseAPI(APIView):
             return Response({'message': 'Failed to retrieve data from the database.'}, status=500)
 
 
-from pymongo import MongoClient
-import json
-from bson import ObjectId
-
-# Initialize MongoDB client
-client = MongoClient()
-db = client['santhosh']
-collection = db['difference_amount']
 
 
-class JSONEncoder(json.JSONEncoder):
-    def default(self, o):
-        if isinstance(o, ObjectId):
-            return str(o)
-        return super().default(o)
+
+# class RetrieveExpenses(APIView):
+#     def post(self, request):
+#         expenses_id = request.data.get('expenses_id')
+
+#         try:
+#             result = database.find_one({'expense_id': expenses_id}, {'_id': 0})
+#         except Exception as e:
+#             print(f"Error retrieving document: {e}")
+#             return Response({'message': 'Failed to retrieve data from the database.'}, status=500)
+
+#         if not result:
+#             return Response({'message': 'Expense ID not found.'}, status=404)
+
+#         total_expenses_details = calculate_totals(expenses_id, result['expenses_details'])
+
+#         response_data = {
+#             'expenses_id': expenses_id,
+#             'total_expenses_details': total_expenses_details,
+#         }
+
+#         return Response(response_data)
+
+# def calculate_totals(expenses_id, expenses):
+#     contributors = {}
+#     total_budget = 0
+
+#     for expense in expenses:
+#         amount = int(expense.get('amount', 0))
+#         contributor_name = expense.get('name')
+
+#         if contributor_name:
+#             contributors.setdefault(contributor_name, 0)
+#             contributors[contributor_name] += amount
+#             total_budget += amount
+
+#     contributors_count = len(contributors)
+#     contributors['total_budget'] = total_budget
+#     contributors['total_average'] = total_budget / contributors_count
+
+#     modified_contributors = {
+#         'total_budget': contributors['total_budget'],
+#         'total_average': contributors['total_average']
+#     }
+
+#     for contributor, amount in contributors.items():
+#         if contributor not in ('total_budget', 'total_average'):
+#             contributor_difference = amount - contributors['total_average']
+#             modified_contributors[f'total_{contributor}_contributed'] = amount
+#             modified_contributors[f'total_{contributor}_difference'] = contributor_difference
+
+#     response_data = [modified_contributors]
+#     return response_data
 
 
-class RetrieveExpenses(APIView):
+
+
+class TotalExpensesAPI(APIView):
     def post(self, request):
         data = request.data
         trip_id = data.get('trip_id')
-        expenses_id = request.data.get('expenses_id')
+        expenses_id = data.get('expenses_id')
 
-        try:
-            result = database.find_one({'trip_id': trip_id, 'expense_id': expenses_id})   
-        except Exception as e:
-            print(f"Error retrieving document: {e}")
-            return Response({'message': 'Failed to retrieve data from the database.'}, status=500)
+    
+        document = database.find_one({'trip_id': trip_id, 'expense_id': expenses_id})
 
-        if not result:
-            return Response({'message': 'Expense ID not found.'}, status=404)
+        if document:
+            trip_members = document.get('trip_members', [])
+            expenses_details = document.get('expenses_details', [])
 
-        total_expenses_details = calculate_totals(expenses_id, result['expenses_details'])
+            total_budget = 0
+            total_contributions = {member: 0 for member in trip_members}
 
-        response_data = {
-            'expenses_id': expenses_id,
-            'total_expenses_details': total_expenses_details,
-        }
+            for expense in expenses_details:
+                amount = int(expense.get('amount', 0))
+                total_budget += amount
+                contributors = expense.get('trip_members', [])
+                for contributor in contributors:
+                    total_contributions[contributor] += amount / len(contributors)
 
-        try:
-            encoded_data = json.loads(json.dumps(response_data, cls=JSONEncoder))
-            result = collection.insert_one(encoded_data)
-            print(f"Data inserted successfully. Inserted ID: {result.inserted_id}")
-        except Exception as e:
-            print(f"Error inserting data into MongoDB: {e}")
-            return Response({'message': 'Failed to store data in the database.'}, status=500)
+            total_average = total_budget / len(trip_members)
+            total_expenses_details = []
 
-        return Response(response_data)
+            total_expense_details = {
+                'total_budget': total_budget,
+                'total_average': total_average,
+            }
+
+            for member in trip_members:
+                contribution = total_contributions[member]
+                difference = contribution - total_average
+
+                total_expense_details[f'total_{member}_contributed'] = contribution
+                total_expense_details[f'total_{member}_difference'] = difference
+
+            total_expenses_details.append(total_expense_details)
+
+            response_data = {
+                'expenses_id': expenses_id,
+                'total_expenses_details': total_expenses_details,
+            }
+            return Response(response_data)
+        else:
+            return Response({'message': 'No data found for the given trip and expenses ID.'}, status=404)
 
 
-def calculate_totals(expenses_id, expenses):
-    contributors = {}
-    total_budget = 0
+      
 
-    for expense in expenses:
-        amount = int(expense.get('amount', 0))  
-        contributor_name = expense.get('name')
 
-        if contributor_name:
-            contributors.setdefault(contributor_name, 0)
-            contributors[contributor_name] += amount
-            total_budget += amount
 
-    contributors_count = len(contributors)
-    contributors['total_budget'] = total_budget
-    contributors['total_average'] = total_budget / contributors_count
 
-    modified_contributors = {
-        'total_budget': contributors['total_budget'],
-        'total_average': contributors['total_average']
-    }
 
-    for contributor, amount in contributors.items():
-        if contributor not in ('total_budget', 'total_average'):
-            contributor_difference = amount - contributors['total_average']
-            modified_contributors[f'total_{contributor}_contributed'] = amount
-            modified_contributors[f'total_{contributor}_difference'] = contributor_difference
 
-    response_data = [modified_contributors]
-    return response_data
+
+
+
+
+
+
+
+
 
 
 
