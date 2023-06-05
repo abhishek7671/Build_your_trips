@@ -25,7 +25,7 @@ urlpatterns = [
 
 
     path('SplitAmount',views.TotalExpensesAPI.as_view()),
-    path('retrieve-Tripid/<str:trip_id>/',views.Retrievegetcall.as_view()),
+    path('get-Tripid/<str:trip_id>/',views.GetTotalExpensesAPI.as_view()),
     # path('retrieve-expenseid/<str:trip_id>/<str:expense_id>/',views.RetrieveExpenseid.as_view()),
       
 ]
