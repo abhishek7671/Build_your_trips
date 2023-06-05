@@ -245,13 +245,13 @@ class PostcallAPI(APIView):
     def post(self, request):
         data = request.data
         trip_id = data.get('trip_id')
-        trip_members = data.get('trip_members', [])
+        trip_emails = data.get('trip_emails', [])
         expenses = data.get('expenses_details', [])
         expense_id = str(uuid.uuid4())
 
         request_data = {
             'trip_id': trip_id,
-            'trip_members': trip_members,
+            'trip_emails': trip_emails,
             'expense_id': expense_id,
             'expenses_details': expenses,
         }
@@ -276,6 +276,7 @@ class PostcallAPI(APIView):
             return Response({'message': 'Failed to store/update data in the database.'}, status=500)
 
         return Response(response_data)
+
 
 
 
@@ -322,59 +323,15 @@ class GetExpenseAPI(APIView):
 
 
 
-# class RetrieveExpenses(APIView):
-#     def post(self, request):
-#         expenses_id = request.data.get('expenses_id')
+from pymongo import MongoClient
+from bson import ObjectId
+from rest_framework.response import Response
+from rest_framework.views import APIView
+import json
 
-#         try:
-#             result = database.find_one({'expense_id': expenses_id}, {'_id': 0})
-#         except Exception as e:
-#             print(f"Error retrieving document: {e}")
-#             return Response({'message': 'Failed to retrieve data from the database.'}, status=500)
-
-#         if not result:
-#             return Response({'message': 'Expense ID not found.'}, status=404)
-
-#         total_expenses_details = calculate_totals(expenses_id, result['expenses_details'])
-
-#         response_data = {
-#             'expenses_id': expenses_id,
-#             'total_expenses_details': total_expenses_details,
-#         }
-
-#         return Response(response_data)
-
-# def calculate_totals(expenses_id, expenses):
-#     contributors = {}
-#     total_budget = 0
-
-#     for expense in expenses:
-#         amount = int(expense.get('amount', 0))
-#         contributor_name = expense.get('name')
-
-#         if contributor_name:
-#             contributors.setdefault(contributor_name, 0)
-#             contributors[contributor_name] += amount
-#             total_budget += amount
-
-#     contributors_count = len(contributors)
-#     contributors['total_budget'] = total_budget
-#     contributors['total_average'] = total_budget / contributors_count
-
-#     modified_contributors = {
-#         'total_budget': contributors['total_budget'],
-#         'total_average': contributors['total_average']
-#     }
-
-#     for contributor, amount in contributors.items():
-#         if contributor not in ('total_budget', 'total_average'):
-#             contributor_difference = amount - contributors['total_average']
-#             modified_contributors[f'total_{contributor}_contributed'] = amount
-#             modified_contributors[f'total_{contributor}_difference'] = contributor_difference
-
-#     response_data = [modified_contributors]
-#     return response_data
-
+client = MongoClient('mongodb://localhost:27017')
+data = client['santhosh']
+coll = data['average_amount']
 
 
 class TotalExpensesAPI(APIView):
@@ -383,89 +340,56 @@ class TotalExpensesAPI(APIView):
         trip_id = data.get('trip_id')
         expenses_id = data.get('expenses_id')
 
-        # Fetch the document from the database
-        document = database.find_one({'trip_id': trip_id, 'expense_id': expenses_id})
+        expense_data = database.find_one({'expense_id': expenses_id})
+        expenses_details = expense_data['expenses_details']
 
-        if document:
-            trip_members = document.get('trip_members', [])
-            expenses_details = document.get('expenses_details', [])
+        # Calculate total budget and contributions
+        total_budget = sum(float(expense['amount']) for expense in expenses_details)
+        total_contributions = {}
+        for email in expense_data['trip_emails']:
+            total_contributions[f'total_{email}_contributed'] = sum(
+                float(expense['amount']) for expense in expenses_details if expense['email'] == email
+            )
 
-            total_budget = 0
-            total_contributions = {member: 0 for member in trip_members}
+        # Calculate differences
+        total_differences = {}
+        for email in expense_data['trip_emails']:
+            total_differences[f'total_{email}_difference'] = total_contributions[f'total_{email}_contributed'] - (
+                        total_budget / len(expense_data['trip_emails']))
 
-            for expense in expenses_details:
-                amount = int(expense.get('amount', 0))
-                total_budget += amount
-                contributors = expense.get('trip_members', [])
-                for contributor in trip_members:
-                    if contributor in contributors:
-                        total_contributions[contributor] += amount / len(contributors)
-
-            total_average = total_budget / len(trip_members)
-            total_expenses_details = []
-
-            total_expense_details = {
-                'total_budget': total_budget,
-                'total_average': total_average,
-            }
-
-            for member in trip_members:
-                contribution = total_contributions[member]
-                difference = contribution - total_average
-
-                total_expense_details[f'total_{member}_contributed'] = contribution
-                total_expense_details[f'total_{member}_difference'] = difference
-
-            total_expenses_details.append(total_expense_details)
-
-            response_data = {
-                'expenses_id': expenses_id,
-                'total_expenses_details': total_expenses_details,
-            }
-            return Response(response_data)
-        else:
-            return Response({'message': 'No data found for the given trip and expenses ID.'}, status=404)
-
-
-      
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-class Retrievegetcall(APIView):
-    def get(self, request, trip_id):
-        try:
-            result = database.find_one({'trip_id': trip_id})
-        except Exception as e:
-            print(f"Error retrieving document: {e}")
-            return Response({'message': 'Failed to retrieve data from the database.'}, status=500)
-
-        if not result:
-            return Response({'message': 'No expenses found for the trip ID.'}, status=404)
-
-        expenses_id = result.get('expense_id')
-        total_expenses_details = calculate_totals(expenses_id, result['expenses_details'])
+        # Calculate total average
+        total_average = total_budget / len(expense_data['trip_emails'])
 
         response_data = {
-            'expenses_id': expenses_id,
-            'total_expenses_details': total_expenses_details,
+            'trip_id':trip_id,
+            'expenses_id': str(expenses_id),  # Convert ObjectId to string
+            'total_expenses_details': [
+                {
+                    'total_budget': total_budget,
+                    'total_average': total_average,
+                    **total_contributions,
+                    **total_differences
+                }
+            ]
         }
+        
+        response_data_json = json.loads(json.dumps(response_data, default=str))  # Convert ObjectId to string in JSON
+        
+        coll.insert_one(response_data_json)  # Insert the response data into MongoDB
 
         return Response(response_data)
+
+
+
+class GetTotalExpensesAPI(APIView):
+    def get(self, request, trip_id):
+        expense_data = coll.find_one({'trip_id': trip_id})
+
+        if not expense_data:
+            return Response({'error': 'Total expenses data not found.'}, status=404)
+        expense_data['_id'] = str(expense_data['_id'])
+
+        return Response(expense_data)
+
 
 
