@@ -13,13 +13,15 @@ from django.utils.decorators import method_decorator
 from app.utils import token_required
 from django.http import Http404
 from rest_framework.exceptions import NotFound
-
+import json
 from app.permissions import CustomIsauthenticated
 from pymongo import MongoClient
 client = MongoClient('mongodb://localhost:27017')
 db = client['santhosh']
 mydb = db['apptrip_pasttravelledtrips']
-
+mycol = db['apptrip_futuretrips']
+database = db['spent_amount']
+coll = db['average_amount']
 
 from app.authentication import JWTAuthentication
 
@@ -145,10 +147,7 @@ class Past(APIView):
 
 
 
-from pymongo import MongoClient
-client = MongoClient('mongodb://localhost:27017')
-db = client['santhosh']
-mycol = db['apptrip_futuretrips']
+
 
 class Create_Travel(APIView):
     permission_classes = [CustomIsauthenticated]
@@ -275,16 +274,11 @@ class Future_User_id(APIView):
 
 
 
-from rest_framework.views import APIView
-from rest_framework.response import Response
-import uuid
-from pymongo import MongoClient
 
-client = MongoClient('mongodb://localhost:27017')
-data = client['santhosh']
-database = data['spent_amount']
 
 class PostcallAPI(APIView):
+    permission_classes = [CustomIsauthenticated]
+    @method_decorator(token_required)
     def post(self, request):
         try:
             data = request.data
@@ -349,6 +343,8 @@ class ExpensesAPI(APIView):
 
 
 class GetExpenseAPI(APIView):
+    permission_classes = [CustomIsauthenticated]
+    @method_decorator(token_required)
     def get(self, request, trip_id, expense_id):
         try:
             logger = logging.getLogger(__name__)
@@ -368,19 +364,9 @@ class GetExpenseAPI(APIView):
 
 
 
-
-
-from pymongo import MongoClient
-from bson import ObjectId
-from rest_framework.response import Response
-from rest_framework.views import APIView
-import json
-
-client = MongoClient('mongodb://localhost:27017')
-data = client['santhosh']
-coll = data['average_amount']
-
 class TotalExpensesAPI(APIView):
+    permission_classes = [CustomIsauthenticated]
+    @method_decorator(token_required)
     def post(self, request):
         try:
             data = request.data
@@ -442,6 +428,8 @@ class TotalExpensesAPI(APIView):
 
 
 class GetTotalExpensesAPI(APIView):
+    permission_classes = [CustomIsauthenticated]
+    @method_decorator(token_required)
     def get(self, request, trip_id):
         logger.info(f"Retrieving total expenses data for trip ID: {trip_id}")
 

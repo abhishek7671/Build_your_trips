@@ -8,14 +8,11 @@ from django.http import JsonResponse
 from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from drf_yasg.utils import swagger_auto_schema
-from drf_yasg import openapi
 from django.contrib.auth.hashers import make_password, check_password
 from .models import USER_details
 from .backend import EmailBackend
 from rest_framework.generics import CreateAPIView
 from app.permissions import CustomIsauthenticated
-from django.core.mail import send_mail
 from django.core.mail import EmailMessage
 
 from app.authentication import JWTAuthentication
@@ -74,8 +71,6 @@ class Register(APIView):
             return JsonResponse({'Message': 'An error occurred during user registration'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
-
-import logging
 
 class LoginView(APIView):
     def post(self, request):
@@ -200,8 +195,6 @@ class LogoutAll(APIView): # logout function for normal user.
         user_data = tokens.find({})  # here we are getting the all token collection iformation
         information=[]
         for info in user_data:
-            # print(info)
-            # print((datetime.utcnow() - info['created_date']).days) 
             if ((datetime.utcnow() - info['created_date']).days) >= 1: # if token created date greater than (datetime seconds to datetime day) we are removing the token from collection
                 information.append(info['_id'])
         print(information)
