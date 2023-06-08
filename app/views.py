@@ -2,7 +2,6 @@ from django.conf import settings
 import jwt
 from datetime import timedelta,datetime
 import json
-import logging
 from app.serializers import  USER_Serializer
 from django.http import JsonResponse
 from rest_framework import status
@@ -22,7 +21,8 @@ mydb = myclient['santhosh']
 mycol3 = mydb['app_user_details']
 tokens=mydb['tokens']
 
-logger = logging.getLogger("django_service.app.views")
+import logging,traceback
+logger = logging.getLogger('django')
 
 JWT_SECRET_KEY = 'django-insecure-6i9o@jxm94t!sao=x%*6yhx9fyht^62ir(wzw5sre^*a%lk02'
 JWT_ACCESS_TOKEN_EXPIRATION = 60
@@ -49,6 +49,7 @@ def get_token_for_user(user):
 
     }
 
+
 class Register(APIView):
     def post(self, request, format=None):
         try:
@@ -60,15 +61,18 @@ class Register(APIView):
                 email = data['email']
                 existing_user = USER_details.objects.filter(email=email).first()
                 if existing_user is not None:
+                    logger.warning('Email already exists')
                     return JsonResponse({'Message': 'Email already exists'}, status=status.HTTP_400_BAD_REQUEST)
                 else:
                     serializer.save(password=hashed_password)
+                    logger.info('User created successfully: %s')
                     return JsonResponse({'Message': 'User created successfully'}, status=status.HTTP_201_CREATED)
             else:
+                logger.critical('User not created')
                 return JsonResponse({'Message': 'User not created'}, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
-            logger.exception("An error occurred during user registration: %s", str(e))
-            return JsonResponse({'Message': 'An error occurred during user registration'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            logger.error('Internal server error: %s', str(e))
+            return JsonResponse({'Message': 'Internal server error'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 
@@ -79,7 +83,7 @@ class LoginView(APIView):
             email = data.get('email', None)
             password = data.get('password', None)
 
-            logging.info(f"Received login request with email: {email}")
+            logging.info("Received login request with email")
 
             user = EmailBackend.authenticate(self, request, username=email, password=password)
 
@@ -94,10 +98,7 @@ class LoginView(APIView):
                     "active":True,
                     "created_date":datetime.utcnow()
                 })
-
-                # Logging successful authentication
-                logging.info(f"User {user._id} authenticated successfully")
-
+                logging.info("User authenticated successfully")
                 return JsonResponse({
                     "status": "success",
                     "msg": "User successfully authenticated",
@@ -108,8 +109,10 @@ class LoginView(APIView):
                 logging.warning(f"Invalid authentication attempt for email: {email}")
                 return JsonResponse({"message": "Invalid data"})
         except Exception as e:
-            logging.exception("An error occurred during login")
+            logging.error("An error occurred during login")
             return JsonResponse({"message": "An error occurred during login"})
+
+
 
 
 
@@ -124,21 +127,21 @@ class ChangePassword(CreateAPIView):
             try:
                 user_obj = USER_details.objects.get(email=email)
             except USER_details.DoesNotExist:
-                self.logger.error(f"User not found for email: {email}")
+                logger.error(f"User not found for email: {email}")
                 return Response({'error': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
             
             if not check_password(oldpassword, user_obj.password):
-                self.logger.error(f"Invalid old password for user with email: {email}")
+                logger.error(f"Invalid old password for user with email: {email}")
                 return Response({'error': 'Invalid old password'}, status=status.HTTP_400_BAD_REQUEST)
             
             user_obj.password = make_password(newpassword)
             user_obj.save()
             
-            self.logger.info(f"Password changed successfully for user with email: {email}")
+            logger.info("Password changed successfully for user with email")
             return Response({'success': 'Password changed successfully'}, status=status.HTTP_200_OK)
         
         except Exception as e:
-            self.logger.exception("An error occurred while changing password.")
+            logger.error("An error occurred while changing password.")
             return Response({'error': 'Internal server error'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     
@@ -174,38 +177,47 @@ class ForgotPassword(APIView):
                     [email],
                 )
                 email_msg.send(fail_silently=True)
+                logger.info('password generated successfully')
                 return Response({"message": "New password generated successfully and sent to your respective email address"})
             else:
+                logger.error('invalid data')
                 return JsonResponse({"message": "Invalid data"})
         
         except Exception as e:
-            logger.exception("An error occurred while processing the forgot password request.")
+            logger.critical("An error occurred while processing the forgot password request.")
             return Response({"error": "Internal server error"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 
 
-class LogoutAll(APIView): # logout function for normal user.
+
+class LogoutAll(APIView):
     permission_classes = [CustomIsauthenticated]
     authentication_classes = [JWTAuthentication]
-    def post(self,request):
-        user_id = request.user._id
-        auth_header = request.headers.get('Authorization')
-        a_token = auth_header.split()[1]
-        user_data = tokens.find({})  # here we are getting the all token collection iformation
-        information=[]
-        for info in user_data:
-            if ((datetime.utcnow() - info['created_date']).days) >= 1: # if token created date greater than (datetime seconds to datetime day) we are removing the token from collection
-                information.append(info['_id'])
-        print(information)
-        tokens.remove({"_id":{"$in": information }}) # here we are using the in operator checking the in list of objects if time is greather then (datetime seconds to datetime day)
-            
-        tokens.update(
-                {"user_id": str(user_id),"access_token":a_token},
-                {
-                    "$set": {"active":False}
-                }
+    def post(self, request):
+        try:
+            user_id = request.user._id
+            auth_header = request.headers.get('Authorization')
+            a_token = auth_header.split()[1]
+            user_data = tokens.find({})
+
+            information = []
+            for info in user_data:
+                if ((datetime.utcnow() - info['created_date']).days) >= 1:
+                    information.append(info['_id'])
+            logger.debug("Tokens to be removed: %s", information)
+            tokens.remove({"_id": {"$in": information}})
+
+            tokens.update(
+                {"user_id": str(user_id), "access_token": a_token},
+                {"$set": {"active": False}}
             )
-        return Response('Logout successfully')
+            logger.info('Logout Successfully')
+            return Response('Logout successful')
+        
+        except Exception as e:
+            logger.error("An error occurred during logout: %s", str(e))
+            return Response('An error occurred during logout', status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 
 

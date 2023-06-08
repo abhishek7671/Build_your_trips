@@ -25,9 +25,9 @@ coll = db['average_amount']
 
 from app.authentication import JWTAuthentication
 
-import logging
+import logging,traceback
 # logging.basicConfig(level=logging.DEBUG)
-logger = logging.getLogger('django_service.apptrip.views')
+logger = logging.getLogger('django')
 
 class Ptrip(APIView):
     authentication_classes = [JWTAuthentication]
@@ -47,12 +47,13 @@ class Ptrip(APIView):
                     "user_id": user_ids,
                     "Created_Data": serializer.data['date_info']
                 }
+                logger.info('Success')
                 return Response(response_data, status=status.HTTP_200_OK)
             else:
                 logger.error("Invalid serializer data")
                 return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
-            logger.exception("An error occurred while processing the request")
+            logger.error("An error occurred while processing the request")
             return Response("Internal server error", status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
@@ -67,13 +68,13 @@ class pasttrip(APIView):
                 {"trip_id": trip_id},
                 {"$set": {"trip_details": trip_details}},
             )
-            
+            logger.info('Successfully complete')
             return Response('success')
         except KeyError as e:
             logger.error("KeyError occurred: %s", str(e))
             return Response("Missing required data", status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
-            logger.exception("An error occurred while processing the request")
+            logger.error("An error occurred while processing the request")
             return Response("Internal server error", status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     
@@ -84,9 +85,10 @@ class Past_User_id(APIView):
         try:
             user_objs = PastTravelledTrips.objects.filter(user_id=user_id)
             serializer = Pserializer(user_objs, many=True)
+            logger.info('200 ok')
             return Response(serializer.data, status=status.HTTP_200_OK)
         except PastTravelledTrips.DoesNotExist:
-            logger.exception("User not found.")
+            logger.critical("User not found.")
             return Response({"Message": "User not found."}, status=status.HTTP_404_NOT_FOUND)
 
 
@@ -134,7 +136,7 @@ class Past(APIView):
             response = {
                 'trip_details': trip_details
             }
-
+            logger.info('Get the data successfully')
             return Response({"message": "Get the data successfully", "user": trip_data, **response}, status=200)
 
         except Http404:
@@ -167,11 +169,13 @@ class Create_Travel(APIView):
                     "user_id": user_ids,
                     "Created_Data": serializer.data['date_info']
                 }
+                logger.info('Success')
                 return Response(response_data, status=status.HTTP_200_OK)
             else:
+                logger.error("Invalid serializer data")
                 return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
-            logger.exception("Error occurred while creating travel.")
+            logger.critical("Error occurred while creating travel.")
             return Response("An error occurred.", status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
@@ -186,13 +190,13 @@ class CompleteTrip(APIView):
                 {"trip_id": trip_id},
                 {"$set": {"trip_details": data}},
             )
-            
+            logger.info('Done')
             return Response('success')
         except KeyError:
             logger.warning("Missing required data in CompleteTrip API.")
             return Response("Missing required data.", status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
-            logger.exception("Error occurred while completing the trip.")
+            logger.critical("Error occurred while completing the trip.")
             return Response("An error occurred.", status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
    
@@ -241,34 +245,32 @@ class Future(APIView):
             response = {
                 'trip_details': trip_details
             }
-
+            logger.info('Data retrieved successfully')
             return Response({"message": "Data retrieved successfully", "user": trip_data, **response}, status=200)
 
         except NotFound as e:
-            logger.error(str(e))
+            logger.error('Trip not found')
             return Response({"error": "Trip not found."}, status=404)
 
         except Exception as e:
-            logger.exception(str(e))
+            logger.exception('An error occurred')
             return Response({"error": "An error occurred."}, status=500)
 
 
 class Future_User_id(APIView):
     def get(self, request, user_id, format=None):
         try:
-            logger.info("API request received for user_id: %s", user_id)
-
             user_objs = FutureTrips.objects.filter(user_id=user_id)
             serializer = FSerializer(user_objs, many=True)
             data = serializer.data
-            logger.info("API response sent for user_id: %s", user_id)
+            logger.info("API response sent for user_id")
 
             return Response(data, status=status.HTTP_200_OK)
         except FutureTrips.DoesNotExist:
-            logger.error("User not found for user_id: %s", user_id)
+            logger.error("User not found for user_id")
             return Response({"Message": "User not found."}, status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
-            logger.exception("An error occurred for user_id: %s", user_id)
+            logger.exception("An error occurred for user_id")
             return Response({"Message": "An error occurred."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
@@ -313,7 +315,7 @@ class PostcallAPI(APIView):
 
             return Response(response_data)
         except Exception as e:
-            logger.exception(f"Error interacting with database: {e}")
+            logger.error(f"Error interacting with database")
             return Response({'message': 'Failed to store/update data in the database.'}, status=500)
 
 
@@ -325,7 +327,7 @@ class ExpensesAPI(APIView):
         try:
             expenses = database.find({'trip_id': trip_id})
         except Exception as e:
-            logger.exception(f"Error retrieving data: {e}")
+            logger.critical(f"Error retrieving data")
             return Response({'message': 'Failed to retrieve data from the database.'}, status=500)
 
         if expenses:
@@ -335,9 +337,10 @@ class ExpensesAPI(APIView):
                     'expense_id': expense['expense_id'],
                     'expenses_details': expense['expenses_details'],
                 })
+                logger.info('Data Post Successfully')
             return Response(response_data)
         else:
-            logger.warning(f"No expenses found for trip_id: {trip_id}")
+            logger.warning(f"No expenses found for trip_id")
             return Response({'message': 'No expenses found for the given trip_id.'}, status=404)
 
 
@@ -347,19 +350,16 @@ class GetExpenseAPI(APIView):
     @method_decorator(token_required)
     def get(self, request, trip_id, expense_id):
         try:
-            logger = logging.getLogger(__name__)
-            logger.info("GetExpenseAPI - GET request received.")
-
             result = database.find_one({'trip_id': trip_id, 'expense_id': expense_id})
             if result:
                 result['_id'] = str(result['_id'])
-                logger.info("GetExpenseAPI - Expense found.")
+                logger.info("Retrieve the Data based on id's ")
                 return Response(result)
             else:
                 logger.warning("GetExpenseAPI - Expense not found.")
                 return Response({'message': 'Expense not found.'}, status=404)
         except Exception as e:
-            logger.exception("GetExpenseAPI - Error retrieving document.")
+            logger.error("GetExpenseAPI - Error retrieving document.")
             return Response({'message': 'Failed to retrieve data from the database.'}, status=500)
 
 
@@ -431,7 +431,7 @@ class GetTotalExpensesAPI(APIView):
     permission_classes = [CustomIsauthenticated]
     @method_decorator(token_required)
     def get(self, request, trip_id):
-        logger.info(f"Retrieving total expenses data for trip ID: {trip_id}")
+        logger.info(f"Retrieving total expenses data for trip ID")
 
         expense_data = coll.find_one({'trip_id': trip_id})
 
