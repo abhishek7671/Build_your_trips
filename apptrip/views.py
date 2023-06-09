@@ -263,14 +263,14 @@ class Future_User_id(APIView):
             user_objs = FutureTrips.objects.filter(user_id=user_id)
             serializer = FSerializer(user_objs, many=True)
             data = serializer.data
-            logger.info("API response sent for user_id")
+            logger.info("Data Retrieve user_id")
 
             return Response(data, status=status.HTTP_200_OK)
         except FutureTrips.DoesNotExist:
             logger.error("User not found for user_id")
             return Response({"Message": "User not found."}, status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
-            logger.exception("An error occurred for user_id")
+            logger.error("An error occurred for user_id")
             return Response({"Message": "An error occurred."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
@@ -373,7 +373,7 @@ class TotalExpensesAPI(APIView):
             trip_id = data.get('trip_id')
             expenses_id = data.get('expenses_id')
 
-            # Logging: Debug level
+            
             logging.debug(f"Received POST request. trip_id: {trip_id}, expenses_id: {expenses_id}")
 
             expense_data = database.find_one({'expense_id': expenses_id})
@@ -412,16 +412,13 @@ class TotalExpensesAPI(APIView):
             response_data_json = json.loads(json.dumps(response_data, default=str))  # Convert ObjectId to string in JSON
             coll.insert_one(response_data_json)  # Insert the response data into MongoDB
 
-            # Logging: Info level
+          
             logging.info("Successfully processed POST request.")
 
             return Response(response_data)
 
         except Exception as e:
-            # Logging: Error level
             logging.error(f"An error occurred: {str(e)}")
-
-            # Return an appropriate response for the exception
             return Response({'error': 'An error occurred while processing the request.'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 

@@ -82,9 +82,6 @@ class LoginView(APIView):
             data = request.data
             email = data.get('email', None)
             password = data.get('password', None)
-
-            logging.info("Received login request with email")
-
             user = EmailBackend.authenticate(self, request, username=email, password=password)
 
             if user is not None:
@@ -98,7 +95,7 @@ class LoginView(APIView):
                     "active":True,
                     "created_date":datetime.utcnow()
                 })
-                logging.info("User authenticated successfully")
+                logging.info("User login successfully")
                 return JsonResponse({
                     "status": "success",
                     "msg": "User successfully authenticated",
