@@ -136,48 +136,88 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-LOG_LEVEL = JSON_SETTINGS.get('LOG_LEVEL')
+# LOG_LEVEL = JSON_SETTINGS.get('LOG_LEVEL')
+# LOGGING = {
+#     'version': 1,
+#     'disable_existing_loggers': False,
+#     'formatters': {
+#         'verbose': {
+#             'format': 'V1.0.0 %(levelname)s %(asctime)s %(process)d %(thread)d %(name)s:%(lineno)s:%(funcName)s %(message)s'
+#         },
+#         'simple': {
+#             'format': '%(levelname)s %(asctime)s %(message)s'
+#         },
+#     },
+#     'filters': {
+#         'require_debug_false': {
+#             '()': 'django.utils.log.RequireDebugFalse'
+#         }
+#     },
+#     'handlers': {
+#         'mail_admins': {
+#             'level': 'ERROR',
+#             'filters': ['require_debug_false'],
+#             'class': 'django.utils.log.AdminEmailHandler'
+#         },
+#         'console': {
+#             'level': LOG_LEVEL,
+#             'class': 'logging.StreamHandler',
+#             'formatter': 'verbose',
+#         },
+#     },
+#     'loggers': {
+#         'django': {
+#             'handlers': ['mail_admins'],
+#             'level': 'ERROR',
+#             'propagate': False,
+#         },
+#         'django_service': {
+#             'handlers': ['console'],
+#             'level': LOG_LEVEL,
+#             'propagate': False,
+#         },
+#     }
+# }
+
+
+
+
+
+
+
+
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
     'formatters': {
-        'verbose': {
-            'format': 'V1.0.0 %(levelname)s %(asctime)s %(process)d %(thread)d %(name)s:%(lineno)s:%(funcName)s %(message)s'
+        'simpleRe': {
+            'format': '%(levelname)s %(asctime)s %(message)s  %(module)s  %(thread)d %(pathname)s',
+            'datefmt': '%Y-%m-%d %H:%M:%S',
         },
-        'simple': {
-            'format': '%(levelname)s %(asctime)s %(message)s'
-        },
-    },
-    'filters': {
-        'require_debug_false': {
-            '()': 'django.utils.log.RequireDebugFalse'
-        }
+
     },
     'handlers': {
-        'mail_admins': {
-            'level': 'ERROR',
-            'filters': ['require_debug_false'],
-            'class': 'django.utils.log.AdminEmailHandler'
-        },
-        'console': {
-            'level': LOG_LEVEL,
-            'class': 'logging.StreamHandler',
-            'formatter': 'verbose',
-        },
+        'file1': {
+            'level': 'INFO',
+            'class': 'logging.FileHandler',
+            'filename': './logs/info.log',
+            'formatter': 'simpleRe',
+            'delay': True,  # Add this line to delay file creation
+        }, 
     },
-    'loggers': {
-        'django.request': {
-            'handlers': ['mail_admins'],
-            'level': 'ERROR',
-            'propagate': False,
-        },
-        'django_service': {
-            'handlers': ['console'],
-            'level': LOG_LEVEL,
-            'propagate': False,
-        },
-    }
+    'loggers':{
+        'django':{
+            'handlers':['file1'],
+            'level':'DEBUG'
+
+        }    
+    },
+
 }
+
+
+
+
 
 # Internationalization
 # https://docs.djangoproject.com/en/3.0/topics/i18n/
