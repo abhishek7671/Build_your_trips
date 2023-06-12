@@ -25,9 +25,11 @@ coll = db['average_amount']
 
 from app.authentication import JWTAuthentication
 
-import logging,traceback
+import logging
 # logging.basicConfig(level=logging.DEBUG)
-logger = logging.getLogger('django')
+# logger = logging.getLogger('django')
+logger = logging.getLogger("django_service.service.views")
+
 
 class Ptrip(APIView):
     authentication_classes = [JWTAuthentication]
@@ -413,12 +415,12 @@ class TotalExpensesAPI(APIView):
             coll.insert_one(response_data_json)  # Insert the response data into MongoDB
 
           
-            logging.info("Successfully processed POST request.")
+            logging.info("Successfully POST ")
 
             return Response(response_data)
 
         except Exception as e:
-            logging.error(f"An error occurred: {str(e)}")
+            logging.error("An error occurred")
             return Response({'error': 'An error occurred while processing the request.'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
@@ -428,15 +430,13 @@ class GetTotalExpensesAPI(APIView):
     permission_classes = [CustomIsauthenticated]
     @method_decorator(token_required)
     def get(self, request, trip_id):
-        logger.info(f"Retrieving total expenses data for trip ID")
-
         expense_data = coll.find_one({'trip_id': trip_id})
 
         if not expense_data:
-            logger.error(f"Total expenses data not found for trip ID: {trip_id}")
+            logger.error("Total expenses data not found for trip ID")
             return Response({'error': 'Total expenses data not found.'}, status=404)
         expense_data['_id'] = str(expense_data['_id'])
-        logger.info(f"Total expenses data retrieved successfully for trip ID: {trip_id}")
+        logger.info("Total expenses data retrieved successfully for trip ID")
         return Response(expense_data)
 
 

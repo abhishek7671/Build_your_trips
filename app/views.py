@@ -21,8 +21,11 @@ mydb = myclient['santhosh']
 mycol3 = mydb['app_user_details']
 tokens=mydb['tokens']
 
-import logging,traceback
-logger = logging.getLogger('django')
+import logging
+# logger = logging.getLogger('django')
+logger = logging.getLogger("django_service.service.views")
+
+
 
 JWT_SECRET_KEY = 'django-insecure-6i9o@jxm94t!sao=x%*6yhx9fyht^62ir(wzw5sre^*a%lk02'
 JWT_ACCESS_TOKEN_EXPIRATION = 60
@@ -65,7 +68,7 @@ class Register(APIView):
                     return JsonResponse({'Message': 'Email already exists'}, status=status.HTTP_400_BAD_REQUEST)
                 else:
                     serializer.save(password=hashed_password)
-                    logger.info('User created successfully: %s')
+                    logger.info('User created successfully')
                     return JsonResponse({'Message': 'User created successfully'}, status=status.HTTP_201_CREATED)
             else:
                 logger.critical('User not created')
@@ -95,7 +98,7 @@ class LoginView(APIView):
                     "active":True,
                     "created_date":datetime.utcnow()
                 })
-                logging.info("User login successfully")
+                logging.info("User successfully authenticated")
                 return JsonResponse({
                     "status": "success",
                     "msg": "User successfully authenticated",

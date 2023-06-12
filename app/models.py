@@ -13,7 +13,7 @@ class USER_details(models.Model):
         (NORMAL_USER, 'Normal User'),
     ]
     usertype = models.CharField(max_length=20,choices=USER_TYPES,default=NORMAL_USER,editable=False)
-    username = models.CharField(max_length=138)
+    # username = models.CharField(max_length=138)
     email = models.EmailField()
     password = models.CharField(max_length=138)
     date_joined = models.DateTimeField(auto_now_add=True)
