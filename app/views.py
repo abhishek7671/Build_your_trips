@@ -22,8 +22,8 @@ mycol3 = mydb['app_user_details']
 tokens=mydb['tokens']
 
 import logging
-# logger = logging.getLogger('django')
-logger = logging.getLogger("django_service.service.views")
+logger = logging.getLogger('django')
+# logger = logging.getLogger("django_service.service.views")
 
 
 
@@ -98,18 +98,18 @@ class LoginView(APIView):
                     "active":True,
                     "created_date":datetime.utcnow()
                 })
-                logging.info("User successfully authenticated")
-                return JsonResponse({
+                logger.info("User successfully authenticated")
+                return Response({
                     "status": "success",
                     "msg": "User successfully authenticated",
                     "token": token,
                     "user_id": str(user._id),
                 })
             else:
-                logging.warning(f"Invalid authentication attempt for email: {email}")
+                logger.warning(f"Invalid authentication attempt for email: {email}")
                 return JsonResponse({"message": "Invalid data"})
         except Exception as e:
-            logging.error("An error occurred during login")
+            logger.error("An error occurred during login")
             return JsonResponse({"message": "An error occurred during login"})
 
 

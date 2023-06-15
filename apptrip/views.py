@@ -27,8 +27,8 @@ from app.authentication import JWTAuthentication
 
 import logging
 # logging.basicConfig(level=logging.DEBUG)
-# logger = logging.getLogger('django')
-logger = logging.getLogger("django_service.service.views")
+logger = logging.getLogger('django')
+# logger = logging.getLogger("django_service.service.views")
 
 
 class Ptrip(APIView):
@@ -152,6 +152,8 @@ class Past(APIView):
 
 
 
+from django.core.mail import send_mail
+from django.conf import settings
 
 class Create_Travel(APIView):
     permission_classes = [CustomIsauthenticated]
@@ -165,6 +167,21 @@ class Create_Travel(APIView):
             serializer = FSerializer(data=request.data)
             if serializer.is_valid():
                 serializer.save()
+
+                # Send email to all email addresses
+                email_addresses = request.data.get('email', [])
+                subject = "Hi all"  # Specify the subject of the email
+                message = "Shall we go for trip"  # Specify the body of the email
+
+                for email_address in email_addresses:
+                    send_mail(
+                        subject,
+                        message,
+                        settings.DEFAULT_FROM_EMAIL,
+                        [email_address],
+                        fail_silently=False,
+                    )
+
                 response_data = {
                     "Message": "Post Data Successfully",
                     "trip_id": trip_id,
@@ -179,6 +196,7 @@ class Create_Travel(APIView):
         except Exception as e:
             logger.critical("Error occurred while creating travel.")
             return Response("An error occurred.", status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 
 
 class CompleteTrip(APIView):
@@ -365,7 +383,6 @@ class GetExpenseAPI(APIView):
             return Response({'message': 'Failed to retrieve data from the database.'}, status=500)
 
 
-
 class TotalExpensesAPI(APIView):
     permission_classes = [CustomIsauthenticated]
     @method_decorator(token_required)
@@ -374,10 +391,6 @@ class TotalExpensesAPI(APIView):
             data = request.data
             trip_id = data.get('trip_id')
             expenses_id = data.get('expenses_id')
-
-            
-            logging.debug(f"Received POST request. trip_id: {trip_id}, expenses_id: {expenses_id}")
-
             expense_data = database.find_one({'expense_id': expenses_id})
             expenses_details = expense_data['expenses_details']
 
@@ -415,13 +428,14 @@ class TotalExpensesAPI(APIView):
             coll.insert_one(response_data_json)  # Insert the response data into MongoDB
 
           
-            logging.info("Successfully POST ")
+            logger.info("Successfully POST ")
 
             return Response(response_data)
 
         except Exception as e:
-            logging.error("An error occurred")
+            logger.error("An error occurred")
             return Response({'error': 'An error occurred while processing the request.'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 
 
 
