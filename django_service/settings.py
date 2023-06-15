@@ -142,80 +142,80 @@ AUTH_PASSWORD_VALIDATORS = [
 
 
 
-LOG_LEVEL = JSON_SETTINGS.get('LOG_LEVEL')
-LOGGING = {
-    'version': 1,
-    'disable_existing_loggers': False,
-    'formatters': {
-        'verbose': {
-            'format': 'V1.0.0 %(levelname)s %(asctime)s %(process)d %(thread)d %(name)s:%(lineno)s:%(funcName)s %(message)s'
-        },
-        'simple': {
-            'format': '%(levelname)s %(asctime)s %(message)s'
-        },
-    },
-    'filters': {
-        'require_debug_false': {
-            '()': 'django.utils.log.RequireDebugFalse'
-        }
-    },
-    'handlers': {
-        'mail_admins': {
-            'level': 'ERROR',
-            'filters': ['require_debug_false'],
-            'class': 'django.utils.log.AdminEmailHandler'
-        },
-        'console': {
-            'level': LOG_LEVEL,
-            'class': 'logging.StreamHandler',
-            'formatter': 'verbose',
-        },
-    },
-    'loggers': {
-        'django.request': {
-            'handlers': ['mail_admins'],
-            'level': 'ERROR',
-            'propagate': False,
-        },
-        'django_service': {
-            'handlers': ['console'],
-            'level': LOG_LEVEL,
-            'propagate': False,
-        },
-    }
-}
-
-
-
-
+# LOG_LEVEL = JSON_SETTINGS.get('LOG_LEVEL')
 # LOGGING = {
 #     'version': 1,
 #     'disable_existing_loggers': False,
 #     'formatters': {
-#         'simpleRe': {
-#             'format': '%(levelname)s %(asctime)s %(message)s  %(module)s  %(thread)d %(pathname)s',
-#             'datefmt': '%Y-%m-%d %H:%M:%S',
+#         'verbose': {
+#             'format': 'V1.0.0 %(levelname)s %(asctime)s %(process)d %(thread)d %(name)s:%(lineno)s:%(funcName)s %(message)s'
 #         },
-
+#         'simple': {
+#             'format': '%(levelname)s %(asctime)s %(message)s'
+#         },
+#     },
+#     'filters': {
+#         'require_debug_false': {
+#             '()': 'django.utils.log.RequireDebugFalse'
+#         }
 #     },
 #     'handlers': {
-#         'file1': {
-#             'level': 'INFO',
-#             'class': 'logging.FileHandler',
-#             'filename': './logs/info.log',
-#             'formatter': 'simpleRe',
-#             'delay': True,  # Add this line to delay file creation
-#         }, 
+#         'mail_admins': {
+#             'level': 'ERROR',
+#             'filters': ['require_debug_false'],
+#             'class': 'django.utils.log.AdminEmailHandler'
+#         },
+#         'console': {
+#             'level': LOG_LEVEL,
+#             'class': 'logging.StreamHandler',
+#             'formatter': 'verbose',
+#         },
 #     },
-#     'loggers':{
-#         'django':{
-#             'handlers':['file1'],
-#             'level':'DEBUG'
-
-#         }    
-#     },
-
+#     'loggers': {
+#         'django.request': {
+#             'handlers': ['mail_admins'],
+#             'level': 'ERROR',
+#             'propagate': False,
+#         },
+#         'django_service': {
+#             'handlers': ['console'],
+#             'level': LOG_LEVEL,
+#             'propagate': False,
+#         },
+#     }
 # }
+
+
+
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'simpleRe': {
+            'format': '%(levelname)s %(asctime)s %(message)s  %(module)s  %(thread)d %(pathname)s',
+            'datefmt': '%Y-%m-%d %H:%M:%S',
+        },
+
+    },
+    'handlers': {
+        'file1': {
+            'level': 'INFO',
+            'class': 'logging.FileHandler',
+            'filename': './logs/info.log',
+            'formatter': 'simpleRe',
+            'delay': True,  # Add this line to delay file creation
+        }, 
+    },
+    'loggers':{
+        'django':{
+            'handlers':['file1'],
+            'level':'DEBUG'
+
+        }    
+    },
+
+}
 
 
 
@@ -249,9 +249,9 @@ EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
-EMAIL_HOST_USER = 'chnarsimha2580@gmail.com'
-EMAIL_HOST_PASSWORD = 'ouyc efoi scaj ugqk'
-DEFAULT_FROM_EMAIL = 'MOURITECH<chnarsimha2580@gmail.com>'
+EMAIL_HOST_USER = 'abhisheksuda123@gmail.com'
+EMAIL_HOST_PASSWORD = 'yhpo fylx nlgt szib'
+DEFAULT_FROM_EMAIL = 'MOURITECH<abhisheksuda123@gmail.com>'
 
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 MEDIA_URL = '/media/'

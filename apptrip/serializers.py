@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import PastTravelledTrips, FutureTrips,Contributor
+from .models import PastTravelledTrips, FutureTrips
 
 
 
@@ -21,10 +21,10 @@ class FSerializer(serializers.ModelSerializer):
 
 
 
-class Aserializer(serializers.ModelSerializer):
-    class Meta:
-        model = Contributor  # Add the model attribute
-        fields = ["budget_details"]
+# class Aserializer(serializers.ModelSerializer):
+#     class Meta:
+#         model = Contributor  # Add the model attribute
+#         fields = ["budget_details"]
 
 
 

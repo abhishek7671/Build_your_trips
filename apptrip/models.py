@@ -39,12 +39,12 @@ class FutureTrips(models.Model):
     
 
 
-class Contributor(models.Model):
-    budget_details = models.JSONField(default=None)
+# class Contributor(models.Model):
+#     budget_details = models.JSONField(default=None)
     
 
-    def __str__(self):
-        return self.name
+#     def __str__(self):
+#         return self.name
 
 
 
