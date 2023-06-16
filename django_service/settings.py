@@ -250,8 +250,8 @@ EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 EMAIL_HOST_USER = 'abhisheksuda123@gmail.com'
-EMAIL_HOST_PASSWORD = 'yhpo fylx nlgt szib'
-DEFAULT_FROM_EMAIL = 'MOURITECH<abhisheksuda123@gmail.com>'
+EMAIL_HOST_PASSWORD = 'eduq yzha uota wayx'
+DEFAULT_FROM_EMAIL = 'BUILDYOURTRIP<abhisheksuda123@gmail.com>'
 
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 MEDIA_URL = '/media/'
