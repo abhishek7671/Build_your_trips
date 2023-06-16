@@ -152,12 +152,13 @@ class Past(APIView):
 
 
 
-from django.core.mail import send_mail
+from django.core.mail import EmailMessage
 from django.conf import settings
 
 class Create_Travel(APIView):
     permission_classes = [CustomIsauthenticated]
     authentication_classes = [JWTAuthentication]
+
     @method_decorator(token_required)
     def post(self, request, format=None):
         try:
@@ -171,16 +172,16 @@ class Create_Travel(APIView):
                 # Send email to all email addresses
                 email_addresses = request.data.get('email', [])
                 subject = "Hi all"  # Specify the subject of the email
-                message = "Shall we go for trip"  # Specify the body of the email
+                message = "Shall we go for a trip?"  # Specify the body of the email
 
                 for email_address in email_addresses:
-                    send_mail(
-                        subject,
-                        message,
-                        settings.DEFAULT_FROM_EMAIL,
-                        [email_address],
-                        fail_silently=False,
+                    email = EmailMessage(
+                        subject=subject,
+                        body=message,
+                        from_email=settings.DEFAULT_FROM_EMAIL,
+                        to=[email_address],
                     )
+                    email.send()
 
                 response_data = {
                     "Message": "Post Data Successfully",
@@ -196,7 +197,6 @@ class Create_Travel(APIView):
         except Exception as e:
             logger.critical("Error occurred while creating travel.")
             return Response("An error occurred.", status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
 
 
 class CompleteTrip(APIView):
@@ -383,8 +383,18 @@ class GetExpenseAPI(APIView):
             return Response({'message': 'Failed to retrieve data from the database.'}, status=500)
 
 
+
+
+
+
+
+import smtplib
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+
 class TotalExpensesAPI(APIView):
     permission_classes = [CustomIsauthenticated]
+
     @method_decorator(token_required)
     def post(self, request):
         try:
@@ -424,17 +434,43 @@ class TotalExpensesAPI(APIView):
                 ]
             }
 
-            response_data_json = json.loads(json.dumps(response_data, default=str))  # Convert ObjectId to string in JSON
-            coll.insert_one(response_data_json)  # Insert the response data into MongoDB
+            response_data_json = json.loads(json.dumps(response_data, default=str)) 
+            coll.insert_one(response_data_json) 
 
-          
-            logger.info("Successfully POST ")
+            for email in expense_data['trip_emails']:
+                mail_content = f'''
+                <h2>Expense Details for Trip ID: {trip_id}</h2>
+                <p>Total Budget: {total_budget}</p>
+                <p>Total Average: {total_average}</p>
+                <p>Total Contributions by {email}: {total_contributions[f'total_{email}_contributed']}</p>
+                <p>Total Difference for {email}: {total_differences[f'total_{email}_difference']}</p>
+                '''
+
+                message = MIMEMultipart()
+                message['From'] = 'BUILDYOURTRIP<abhisheksuda123@gmail.com>'
+                message['To'] = email
+                message['Subject'] = 'Expense Details'
+
+                
+                message.attach(MIMEText(mail_content, 'html'))
+
+              
+                with smtplib.SMTP('smtp.gmail.com', 587) as server:
+                    server.starttls()
+                    server.login('abhisheksuda123@gmail.com', 'eduq yzha uota wayx')
+                    server.send_message(message)
+
+            logger.info("Successfully POST")
 
             return Response(response_data)
 
         except Exception as e:
-            logger.error("An error occurred")
-            return Response({'error': 'An error occurred while processing the request.'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            logger.error(f"An error occurred: {str(e)}")
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+
+
 
 
 
