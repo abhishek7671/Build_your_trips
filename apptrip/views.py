@@ -343,19 +343,24 @@ class TotalExpensesAPI(APIView):
 
 
 
-
-class GetTotalExpensesAPI(APIView):
-    permission_classes = [CustomIsauthenticated]
-    @method_decorator(token_required)
+class LastExpenseDetailsAPI(APIView):
     def get(self, request, trip_id):
-        expense_data = coll.find_one({'trip_id': trip_id})
+        try:
+          
+            expense_data = coll.find_one({'trip_id': trip_id}, sort=[('_id', -1)])
 
-        if not expense_data:
-            logger.error("Total expenses data not found for trip ID")
-            return Response({'error': 'Total expenses data not found.'}, status=404)
-        expense_data['_id'] = str(expense_data['_id'])
-        logger.info("Total expenses data retrieved successfully for trip ID")
-        return Response(expense_data)
+            if not expense_data:
+                return Response({'error': 'Expense details not found for the given trip_id'}, status=status.HTTP_404_NOT_FOUND)
+
+            total_expenses_details = expense_data['total_expenses_details']
+            last_expense_details = total_expenses_details[-1]
+            logger.info('Retrieve the Latest data Successfully')
+            return Response(last_expense_details)
+
+        except Exception as e:
+            logger.error('Invalid data')
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 
 
 
