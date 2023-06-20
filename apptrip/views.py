@@ -1,20 +1,20 @@
-from .serializers import Pserializer, FSerializer
-from .models import PastTravelledTrips, FutureTrips
+import logging
+import json
+from .serializers import FSerializer
+from .models import FutureTrips
 from rest_framework import status
-from bson import ObjectId
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework import status
-from drf_yasg.utils import swagger_auto_schema
-from drf_yasg import openapi
-from django.http import Http404
 import uuid
 from django.utils.decorators import method_decorator
 from app.utils import token_required
-from django.http import Http404
 from rest_framework.exceptions import NotFound
-import json
+from app.authentication import JWTAuthentication
 from app.permissions import CustomIsauthenticated
+from django.core.mail import EmailMessage
+import smtplib
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
 from pymongo import MongoClient
 client = MongoClient('mongodb://localhost:27017')
 db = client['santhosh']
@@ -24,15 +24,13 @@ collection = db['apptrip_futuretrips']
 database = db['spent_amount']
 coll = db['average_amount']
 
-from app.authentication import JWTAuthentication
 
-import logging
-# logging.basicConfig(level=logging.DEBUG)
+
 logger = logging.getLogger('django')
 # logger = logging.getLogger("django_service.service.views")
 
 from django.core.mail import EmailMessage
-from django.conf import settings
+
 
 
 class Create_Travel(APIView):
@@ -47,9 +45,7 @@ class Create_Travel(APIView):
             request.data.update({'user_id': user_ids, 'trip_id': trip_id})
             serializer = FSerializer(data=request.data)
 
-            try:
-                serializer.is_valid(raise_exception=True)
-            except Exception as e:
+            if not serializer.is_valid():
                 logger.error("Invalid serializer data")
                 return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -81,7 +77,6 @@ class Create_Travel(APIView):
             logger.critical("Error occurred while creating travel.")
             return Response("An error occurred.", status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-
 class CompleteTrip(APIView):
     def post(self, request):
         try:
@@ -89,21 +84,17 @@ class CompleteTrip(APIView):
             trip_id = data.get('trip_id')
             trip_details = data.get('trip_details')
 
-            missing_fields = []
-            if not trip_id:
-                missing_fields.append('trip_id')
-            if not trip_details:
-                missing_fields.append('trip_details')
+            missing_fields = [field for field in ['trip_id', 'trip_details'] if not data.get(field)]
+
             if missing_fields:
                 return Response({'error': f"Missing required field(s): {', '.join(missing_fields)}"}, status=status.HTTP_400_BAD_REQUEST)
-
-        
             mycol.update(
-                    {"trip_id": trip_id},
-                    {"$set": {"trip_details": trip_details}},
-                )
+                {"trip_id": trip_id},
+                {"$set": {"trip_details": trip_details}},
+            )
             logger.info('Done')
             return Response('success')
+
         except Exception as e:
             logger.critical("Error occurred while completing the trip: %s", e)
             return Response("An error occurred.", status=status.HTTP_500_INTERNAL_SERVER_ERROR)
@@ -111,9 +102,9 @@ class CompleteTrip(APIView):
 
    
 
-
 class Future(APIView):
     permission_classes = [CustomIsauthenticated]
+
     @method_decorator(token_required)
     def get(self, request, user_id, trip_id):
         try:
@@ -137,30 +128,25 @@ class Future(APIView):
             mycol = db['apptrip_futuretrips']
             user2 = mycol.find_one({'user_id': str(user_id), 'trip_id': str(trip_id)})
 
-            trip_details = []
-            if "trip_details" in user2:
-                for detail in user2["trip_details"]:
-                    trip_details.append({
-                        "day": detail["day"],
-                        "date": detail["date"],
-                        "visit_place": detail["visit_place"],
-                        "budget": detail["budget"],
-                        "location": detail["location"]
-                    })
+            trip_details = [{
+                "day": detail["day"],
+                "date": detail["date"],
+                "visit_place": detail["visit_place"],
+                "budget": detail["budget"],
+                "location": detail["location"]
+            } for detail in user2["trip_details"]] if "trip_details" in user2 else []
 
             response = {
                 'trip_details': trip_details
             }
+
             logger.info('Data retrieved successfully')
             return Response({"message": "Data retrieved successfully", "user": trip_data, **response}, status=200)
-
-        except NotFound as e:
-            logger.error('Trip not found')
-            return Response({"error": "Trip not found."}, status=404)
 
         except Exception as e:
             logger.exception('An error occurred')
             return Response({"error": "An error occurred."}, status=500)
+
 
 
 class Future_User_id(APIView):
@@ -172,9 +158,6 @@ class Future_User_id(APIView):
             logger.info("Data Retrieve user_id")
 
             return Response(data, status=status.HTTP_200_OK)
-        except FutureTrips.DoesNotExist:
-            logger.error("User not found for user_id")
-            return Response({"Message": "User not found."}, status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
             logger.error("An error occurred for user_id")
             return Response({"Message": "An error occurred."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
@@ -182,34 +165,29 @@ class Future_User_id(APIView):
 
 
 
+
+
 class PostcallAPI(APIView):
     permission_classes = [CustomIsauthenticated]
-
+    
     @method_decorator(token_required)
     def post(self, request):
         try:
             data = request.data
             trip_id = data.get('trip_id')
-            trip_emails = data.get('trip_emails')
-            expenses = data.get('expenses_details')
+            trip_emails = data.get('trip_emails', [])
+            expenses = data.get('expenses_details', [])
             expense_id = str(uuid.uuid4())
-            missing_fields = []
+            missing_fields = [field for field, condition in [('trip_id', not trip_id), ('trip_emails', not trip_emails or not isinstance(trip_emails, list)), ('expenses_details', not expenses or not isinstance(expenses, list))] if condition]
 
-            if not trip_id:
-                missing_fields.append('trip_id')
-            if not trip_emails:
-                missing_fields.append('trip_emails')
-            if not expenses:
-                missing_fields.append('expenses_details')
-            
             if missing_fields:
                 return Response({'error': f"Missing or invalid required field(s): {', '.join(missing_fields)}"}, status=status.HTTP_400_BAD_REQUEST)
 
             request_data = {
                 'trip_id': trip_id,
-                'trip_emails': trip_emails or [],
+                'trip_emails': trip_emails,
                 'expense_id': expense_id,
-                'expenses_details': expenses or [],
+                'expenses_details': expenses,
             }
             response_data = {
                 'message': 'Data posted successfully',
@@ -219,7 +197,9 @@ class PostcallAPI(APIView):
             if 'expenses_id' in data and 'expenses_details' in data:
                 database.update(
                     {'expense_id': data['expenses_id']},
-                    {'$set': {'expenses_details': data['expenses_details']}}
+                    {
+                        '$push': {'expenses_details': {'$each': data['expenses_details']}},
+                    }
                 )
                 logger.info('Data successfully updated in the database')
                 return Response('success')
@@ -282,9 +262,6 @@ class GetExpenseAPI(APIView):
 
 
 
-import smtplib
-from email.mime.multipart import MIMEMultipart
-from email.mime.text import MIMEText
 
 class TotalExpensesAPI(APIView):
     permission_classes = [CustomIsauthenticated]
@@ -298,28 +275,22 @@ class TotalExpensesAPI(APIView):
             expense_data = database.find_one({'expense_id': expenses_id})
             expenses_details = expense_data['expenses_details']
 
-            missing_fields=[]
-            if not trip_id:
-                missing_fields.append('trip_id')
-            if not expenses_id:
-                missing_fields.append('expenses_id')
+            missing_fields = [field for field in ['trip_id', 'expenses_id'] if not data.get(field)]
             if missing_fields:
                 return Response({'error': f"Missing required field(s): {', '.join(missing_fields)}"}, status=status.HTTP_400_BAD_REQUEST)
 
-
             # Calculate total budget and contributions
             total_budget = sum(float(expense['amount']) for expense in expenses_details)
-            total_contributions = {}
-            for email in expense_data['trip_emails']:
-                total_contributions[f'total_{email}_contributed'] = sum(
-                    float(expense['amount']) for expense in expenses_details if expense['email'] == email
-                )
+            total_contributions = {
+                f'total_{email}_contributed': sum(float(expense['amount']) for expense in expenses_details if expense['email'] == email)
+                for email in expense_data['trip_emails']
+            }
 
             # Calculate differences
-            total_differences = {}
-            for email in expense_data['trip_emails']:
-                total_differences[f'total_{email}_difference'] = total_contributions[f'total_{email}_contributed'] - (
-                            total_budget / len(expense_data['trip_emails']))
+            total_differences = {
+                f'total_{email}_difference': total_contributions[f'total_{email}_contributed'] - (total_budget / len(expense_data['trip_emails']))
+                for email in expense_data['trip_emails']
+            }
 
             # Calculate total average
             total_average = total_budget / len(expense_data['trip_emails'])
@@ -337,8 +308,8 @@ class TotalExpensesAPI(APIView):
                 ]
             }
 
-            response_data_json = json.loads(json.dumps(response_data, default=str)) 
-            coll.insert_one(response_data_json) 
+            response_data_json = json.loads(json.dumps(response_data, default=str))
+            coll.insert_one(response_data_json)
 
             for email in expense_data['trip_emails']:
                 mail_content = f'''
@@ -354,10 +325,8 @@ class TotalExpensesAPI(APIView):
                 message['To'] = email
                 message['Subject'] = 'Expense Details'
 
-                
                 message.attach(MIMEText(mail_content, 'html'))
 
-              
                 with smtplib.SMTP('smtp.gmail.com', 587) as server:
                     server.starttls()
                     server.login('abhisheksuda123@gmail.com', 'eduq yzha uota wayx')
