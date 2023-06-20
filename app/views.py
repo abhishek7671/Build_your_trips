@@ -58,11 +58,9 @@ class Register(APIView):
     def post(self, request, format=None):
         try:
             serializer = USER_Serializer(data=json.loads(request.body))
-            try:
-                serializer.is_valid(raise_exception=True)
-            except Exception as e:
-                logger.warning('Invalid serializer data: %s', str(e))
-                return JsonResponse(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            if not serializer.is_valid():
+                logger.error("Invalid serializer data")
+                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
             data = serializer.validated_data
             password = data['password']
@@ -81,7 +79,6 @@ class Register(APIView):
             return JsonResponse({'Message': 'Internal server error'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
-
 class LoginView(APIView):
     def post(self, request):
         try:
@@ -89,11 +86,7 @@ class LoginView(APIView):
             email = data.get('email', None)
             password = data.get('password', None)
 
-            missing_fields = []
-            if not email:
-                missing_fields.append('email')
-            if not password:
-                missing_fields.append('password')
+            missing_fields = [field for field in ['email', 'password'] if not data.get(field)]
             if missing_fields:
                 return Response({'error': f"Missing required field(s): {', '.join(missing_fields)}"}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -126,7 +119,6 @@ class LoginView(APIView):
 
 
 
-
 class ChangePassword(CreateAPIView):
     def post(self, request):
         try:
@@ -134,32 +126,28 @@ class ChangePassword(CreateAPIView):
             email = data.get('email')
             oldpassword = data.get('password')
             newpassword = data.get('newpassword')
-            
-            missing_fields = []
-            if not email:
-                missing_fields.append('email')
-            if not oldpassword:
-                missing_fields.append('password')
-            if not newpassword:
-                missing_fields.append('newpassword')
+
+            missing_fields = [field for field in ['email', 'password', 'newpassword'] if not data.get(field)]
+
             if missing_fields:
                 return Response({'error': f"Missing required field(s): {', '.join(missing_fields)}"}, status=status.HTTP_400_BAD_REQUEST)
-            try:
-                user_obj = USER_details.objects.get(email=email)
-            except USER_details.DoesNotExist:
+
+            user_obj = USER_details.objects.filter(email=email).first()
+
+            if not user_obj:
                 logger.error(f"User not found for email: {email}")
                 return Response({'error': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
-            
+
             if not check_password(oldpassword, user_obj.password):
                 logger.error(f"Invalid old password for user with email: {email}")
                 return Response({'error': 'Invalid old password'}, status=status.HTTP_400_BAD_REQUEST)
-            
+
             user_obj.password = make_password(newpassword)
             user_obj.save()
-            
+
             logger.info("Password changed successfully for user with email")
             return Response({'success': 'Password changed successfully'}, status=status.HTTP_200_OK)
-        
+
         except Exception as e:
             logger.error("An error occurred while changing password.")
             return Response({'error': 'Internal server error'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
@@ -172,42 +160,36 @@ def generate_otp(length=6):
         return secrets.token_hex(length // 2 + 1)[:length]
 
 
-
 class ForgotPassword(APIView):
     def post(self, request):
         try:
             data = request.data
-            email = data["email"]
-            missing_fields=[]
-            if not email:
-                missing_fields.append('email')
+            email = data.get("email")
+            missing_fields = [field for field in ['email'] if not data.get(field)]
+            
             if missing_fields:
                 return Response({'error': f"Missing required field(s): {', '.join(missing_fields)}"}, status=status.HTTP_400_BAD_REQUEST)
-            try:
-                user_obj = USER_details.objects.get(email=email)
-            except USER_details.DoesNotExist:
+
+            user_obj = USER_details.objects.filter(email=email).first()
+            if not user_obj:
                 return Response({'error': 'Email doesn\'t exist'}, status=status.HTTP_404_NOT_FOUND)
-            
-            if user_obj is not None:
-                otp = generate_otp()
-                hashed_password = make_password(otp)
-                mycol3.update(
-                    {"email": email},
-                    {"$set": {"password": hashed_password}}
-                )
-                email_msg = EmailMessage(
-                    'Email Details',
-                    f"RESET PASSWORD \n Hey there!\n It looks like you are trying to reset your password.\n\nYOUR NEW LOGIN DETAILS:\n password: {otp}\n Email: {email}",
-                    settings.EMAIL_HOST_USER,
-                    [email],
-                )
-                email_msg.send(fail_silently=True)
-                logger.info('password generated successfully')
-                return Response({"message": "New password generated successfully and sent to your respective email address"})
-            else:
-                logger.error('invalid data')
-                return JsonResponse({"message": "Invalid data"})
-        
+
+            otp = generate_otp()
+            hashed_password = make_password(otp)
+            mycol3.update(
+                {"email": email},
+                {"$set": {"password": hashed_password}}
+            )
+            email_msg = EmailMessage(
+                'Email Details',
+                f"RESET PASSWORD \n Hey there!\n It looks like you are trying to reset your password.\n\nYOUR NEW LOGIN DETAILS:\n password: {otp}\n Email: {email}",
+                settings.EMAIL_HOST_USER,
+                [email],
+            )
+            email_msg.send(fail_silently=True)
+            logger.info('password generated successfully')
+            return Response({"message": "New password generated successfully and sent to your respective email address"})
+
         except Exception as e:
             logger.critical("An error occurred while processing the forgot password request.")
             return Response({"error": "Internal server error"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
