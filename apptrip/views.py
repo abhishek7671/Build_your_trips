@@ -20,6 +20,7 @@ client = MongoClient('mongodb://localhost:27017')
 db = client['santhosh']
 mydb = db['apptrip_pasttravelledtrips']
 mycol = db['apptrip_futuretrips']
+collection = db['apptrip_futuretrips']
 database = db['spent_amount']
 coll = db['average_amount']
 
@@ -30,130 +31,9 @@ import logging
 logger = logging.getLogger('django')
 # logger = logging.getLogger("django_service.service.views")
 
-
-class Ptrip(APIView):
-    authentication_classes = [JWTAuthentication]
-    permission_classes = [CustomIsauthenticated]
-    @method_decorator(token_required)
-    def post(self, request, format=None):
-        try:
-            user_ids = str(request.user._id)
-            trip_id = str(uuid.uuid4())
-            request.data.update({'user_id': user_ids, 'trip_id': trip_id})
-            serializer = Pserializer(data=request.data)
-            if serializer.is_valid():
-                serializer.save()
-                response_data = {
-                    "Message": "Post Data Successfully",
-                    "trip_id": trip_id,
-                    "user_id": user_ids,
-                    "Created_Data": serializer.data['date_info']
-                }
-                logger.info('Success')
-                return Response(response_data, status=status.HTTP_200_OK)
-            else:
-                logger.error("Invalid serializer data")
-                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-        except Exception as e:
-            logger.error("An error occurred while processing the request")
-            return Response("Internal server error", status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-
-class pasttrip(APIView):
-    def post(self, request):
-        try:
-            data = request.data
-            trip_id = data['trip_id']
-            trip_details = data['trip_details']
-            
-            mydb.update(
-                {"trip_id": trip_id},
-                {"$set": {"trip_details": trip_details}},
-            )
-            logger.info('Successfully complete')
-            return Response('success')
-        except KeyError as e:
-            logger.error("KeyError occurred: %s", str(e))
-            return Response("Missing required data", status=status.HTTP_400_BAD_REQUEST)
-        except Exception as e:
-            logger.error("An error occurred while processing the request")
-            return Response("Internal server error", status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-    
-
-
-class Past_User_id(APIView):
-    def get(self, request, user_id, format=None):
-        try:
-            user_objs = PastTravelledTrips.objects.filter(user_id=user_id)
-            serializer = Pserializer(user_objs, many=True)
-            logger.info('200 ok')
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        except PastTravelledTrips.DoesNotExist:
-            logger.critical("User not found.")
-            return Response({"Message": "User not found."}, status=status.HTTP_404_NOT_FOUND)
-
-
-
-class Past(APIView):
-    permission_classes = [CustomIsauthenticated]
-    @method_decorator(token_required)
-    def get(self, request, user_id, trip_id):
-        try:
-            db_client = MongoClient('mongodb://localhost:27017')
-            db = db_client['santhosh']
-            collection = db['apptrip_pasttravelledtrips']
-
-            user = collection.find_one({'user_id': str(user_id), 'trip_id': str(trip_id)})
-            if not user:
-                raise Http404
-
-            trip_data = {
-                "trip_id": trip_id,
-                "trip_name": user["trip_name"],
-                "start_date": user["start_date"],
-                "end_date": user["end_date"],
-                "days": user["days"],
-                "email": user["email"],
-                "budget": user["budget"],
-                "address": user["address"],
-                "location": user['location'],
-                "date_info": user["date_info"]
-            }
-
-            mycol = db['apptrip_pasttravelledtrips']
-            user2 = mycol.find_one({'user_id': str(user_id), 'trip_id': str(trip_id)})
-
-            trip_details = []
-            if "trip_details" in user2:
-                for detail in user2["trip_details"]:
-                    trip_details.append({
-                        "day": detail["day"],
-                        "date": detail["date"],
-                        "visit_place": detail["visit_place"],
-                        "budget": detail["budget"],
-                        "location": detail["location"]
-                    })
-
-            response = {
-                'trip_details': trip_details
-            }
-            logger.info('Get the data successfully')
-            return Response({"message": "Get the data successfully", "user": trip_data, **response}, status=200)
-
-        except Http404:
-            logger.warning("User or trip not found")
-            return Response({"message": "User or trip not found"}, status=404)
-
-        except Exception as e:
-            logger.error(f"An error occurred: {str(e)}")
-            return Response({"message": "An error occurred"}, status=500)
-
-
-
-
 from django.core.mail import EmailMessage
 from django.conf import settings
+
 
 class Create_Travel(APIView):
     permission_classes = [CustomIsauthenticated]
@@ -166,34 +46,37 @@ class Create_Travel(APIView):
             trip_id = str(uuid.uuid4())
             request.data.update({'user_id': user_ids, 'trip_id': trip_id})
             serializer = FSerializer(data=request.data)
-            if serializer.is_valid():
-                serializer.save()
 
-                # Send email to all email addresses
-                email_addresses = request.data.get('email', [])
-                subject = "Hi all"  # Specify the subject of the email
-                message = "Shall we go for a trip?"  # Specify the body of the email
-
-                for email_address in email_addresses:
-                    email = EmailMessage(
-                        subject=subject,
-                        body=message,
-                        from_email=settings.DEFAULT_FROM_EMAIL,
-                        to=[email_address],
-                    )
-                    email.send()
-
-                response_data = {
-                    "Message": "Post Data Successfully",
-                    "trip_id": trip_id,
-                    "user_id": user_ids,
-                    "Created_Data": serializer.data['date_info']
-                }
-                logger.info('Success')
-                return Response(response_data, status=status.HTTP_200_OK)
-            else:
+            try:
+                serializer.is_valid(raise_exception=True)
+            except Exception as e:
                 logger.error("Invalid serializer data")
                 return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+            serializer.save()
+
+            # Send email to all email addresses
+            email_addresses = request.data.get('email', [])
+            subject = "Hi all"  # Specify the subject of the email
+            message = "Shall we go for a trip?"  # Specify the body of the email
+
+            for email_address in email_addresses:
+                email = EmailMessage(
+                    subject=subject,
+                    body=message,
+                    from_email='BUILDYOURTRIP<abhisheksuda123@gmail.com>',
+                    to=[email_address],
+                )
+                email.send()
+
+            response_data = {
+                "Message": "Post Data Successfully",
+                "trip_id": trip_id,
+                "user_id": user_ids,
+                "Created_Data": serializer.data['date_info']
+            }
+            logger.info('Success')
+            return Response(response_data, status=status.HTTP_200_OK)
         except Exception as e:
             logger.critical("Error occurred while creating travel.")
             return Response("An error occurred.", status=status.HTTP_500_INTERNAL_SERVER_ERROR)
@@ -203,21 +86,28 @@ class CompleteTrip(APIView):
     def post(self, request):
         try:
             data = request.data
-            trip_id = data['trip_id']
-            data = data['trip_details']
-            
+            trip_id = data.get('trip_id')
+            trip_details = data.get('trip_details')
+
+            missing_fields = []
+            if not trip_id:
+                missing_fields.append('trip_id')
+            if not trip_details:
+                missing_fields.append('trip_details')
+            if missing_fields:
+                return Response({'error': f"Missing required field(s): {', '.join(missing_fields)}"}, status=status.HTTP_400_BAD_REQUEST)
+
+        
             mycol.update(
-                {"trip_id": trip_id},
-                {"$set": {"trip_details": data}},
-            )
+                    {"trip_id": trip_id},
+                    {"$set": {"trip_details": trip_details}},
+                )
             logger.info('Done')
             return Response('success')
-        except KeyError:
-            logger.warning("Missing required data in CompleteTrip API.")
-            return Response("Missing required data.", status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
-            logger.critical("Error occurred while completing the trip.")
+            logger.critical("Error occurred while completing the trip: %s", e)
             return Response("An error occurred.", status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 
    
 
@@ -227,10 +117,6 @@ class Future(APIView):
     @method_decorator(token_required)
     def get(self, request, user_id, trip_id):
         try:
-            db_client = MongoClient('mongodb://localhost:27017')
-            db = db_client['santhosh']
-            collection = db['apptrip_futuretrips']
-
             user = collection.find_one({'user_id': str(user_id), 'trip_id': str(trip_id)})
             if not user:
                 raise NotFound('Trip not found.')
@@ -296,24 +182,34 @@ class Future_User_id(APIView):
 
 
 
-
-
 class PostcallAPI(APIView):
     permission_classes = [CustomIsauthenticated]
+
     @method_decorator(token_required)
     def post(self, request):
         try:
             data = request.data
             trip_id = data.get('trip_id')
-            trip_emails = data.get('trip_emails', [])
-            expenses = data.get('expenses_details', [])
+            trip_emails = data.get('trip_emails')
+            expenses = data.get('expenses_details')
             expense_id = str(uuid.uuid4())
+            missing_fields = []
+
+            if not trip_id:
+                missing_fields.append('trip_id')
+            if not trip_emails:
+                missing_fields.append('trip_emails')
+            if not expenses:
+                missing_fields.append('expenses_details')
+            
+            if missing_fields:
+                return Response({'error': f"Missing or invalid required field(s): {', '.join(missing_fields)}"}, status=status.HTTP_400_BAD_REQUEST)
 
             request_data = {
                 'trip_id': trip_id,
-                'trip_emails': trip_emails,
+                'trip_emails': trip_emails or [],
                 'expense_id': expense_id,
-                'expenses_details': expenses,
+                'expenses_details': expenses or [],
             }
             response_data = {
                 'message': 'Data posted successfully',
@@ -323,9 +219,7 @@ class PostcallAPI(APIView):
             if 'expenses_id' in data and 'expenses_details' in data:
                 database.update(
                     {'expense_id': data['expenses_id']},
-                    {
-                        '$push': {'expenses_details': {'$each': data['expenses_details']}},
-                    }
+                    {'$set': {'expenses_details': data['expenses_details']}}
                 )
                 logger.info('Data successfully updated in the database')
                 return Response('success')
@@ -335,7 +229,7 @@ class PostcallAPI(APIView):
 
             return Response(response_data)
         except Exception as e:
-            logger.error(f"Error interacting with database")
+            logger.error(f"Error interacting with the database")
             return Response({'message': 'Failed to store/update data in the database.'}, status=500)
 
 
@@ -404,6 +298,15 @@ class TotalExpensesAPI(APIView):
             expense_data = database.find_one({'expense_id': expenses_id})
             expenses_details = expense_data['expenses_details']
 
+            missing_fields=[]
+            if not trip_id:
+                missing_fields.append('trip_id')
+            if not expenses_id:
+                missing_fields.append('expenses_id')
+            if missing_fields:
+                return Response({'error': f"Missing required field(s): {', '.join(missing_fields)}"}, status=status.HTTP_400_BAD_REQUEST)
+
+
             # Calculate total budget and contributions
             total_budget = sum(float(expense['amount']) for expense in expenses_details)
             total_contributions = {}
@@ -467,10 +370,6 @@ class TotalExpensesAPI(APIView):
         except Exception as e:
             logger.error(f"An error occurred: {str(e)}")
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-
-
-
 
 
 
