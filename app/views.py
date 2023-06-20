@@ -13,7 +13,6 @@ from .backend import EmailBackend
 from rest_framework.generics import CreateAPIView
 from app.permissions import CustomIsauthenticated
 from django.core.mail import EmailMessage
-
 from app.authentication import JWTAuthentication
 from pymongo import MongoClient
 myclient = MongoClient("mongodb://localhost:27017/")
@@ -53,26 +52,30 @@ def get_token_for_user(user):
     }
 
 
+
+
 class Register(APIView):
     def post(self, request, format=None):
         try:
             serializer = USER_Serializer(data=json.loads(request.body))
-            if serializer.is_valid():
-                data = serializer.validated_data
-                password = data['password']
-                hashed_password = make_password(password)
-                email = data['email']
-                existing_user = USER_details.objects.filter(email=email).first()
-                if existing_user is not None:
-                    logger.warning('Email already exists')
-                    return JsonResponse({'Message': 'Email already exists'}, status=status.HTTP_400_BAD_REQUEST)
-                else:
-                    serializer.save(password=hashed_password)
-                    logger.info('User created successfully')
-                    return JsonResponse({'Message': 'User created successfully'}, status=status.HTTP_201_CREATED)
+            try:
+                serializer.is_valid(raise_exception=True)
+            except Exception as e:
+                logger.warning('Invalid serializer data: %s', str(e))
+                return JsonResponse(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+            data = serializer.validated_data
+            password = data['password']
+            hashed_password = make_password(password)
+            email = data['email'] 
+            existing_user = USER_details.objects.filter(email=email).first()
+            if existing_user is not None:
+                logger.warning('Email already exists')
+                return JsonResponse({'Message': 'Email already exists'}, status=status.HTTP_400_BAD_REQUEST)
             else:
-                logger.critical('User not created')
-                return JsonResponse({'Message': 'User not created'}, status=status.HTTP_400_BAD_REQUEST)
+                serializer.save(password=hashed_password)
+                logger.info('User created successfully')
+                return JsonResponse({'Message': 'User created successfully'}, status=status.HTTP_201_CREATED)
         except Exception as e:
             logger.error('Internal server error: %s', str(e))
             return JsonResponse({'Message': 'Internal server error'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
@@ -85,6 +88,15 @@ class LoginView(APIView):
             data = request.data
             email = data.get('email', None)
             password = data.get('password', None)
+
+            missing_fields = []
+            if not email:
+                missing_fields.append('email')
+            if not password:
+                missing_fields.append('password')
+            if missing_fields:
+                return Response({'error': f"Missing required field(s): {', '.join(missing_fields)}"}, status=status.HTTP_400_BAD_REQUEST)
+
             user = EmailBackend.authenticate(self, request, username=email, password=password)
 
             if user is not None:
@@ -92,11 +104,11 @@ class LoginView(APIView):
                 access_token = token['access']
                 refresh_token = token['refresh']
                 tokens.insert_one({
-                    "user_id":str(user._id),
+                    "user_id": str(user._id),
                     "access_token": access_token,
-                    "refresh_token":refresh_token,
-                    "active":True,
-                    "created_date":datetime.utcnow()
+                    "refresh_token": refresh_token,
+                    "active": True,
+                    "created_date": datetime.utcnow()
                 })
                 logger.info("User successfully authenticated")
                 return Response({
@@ -107,11 +119,10 @@ class LoginView(APIView):
                 })
             else:
                 logger.warning(f"Invalid authentication attempt for email: {email}")
-                return JsonResponse({"message": "Invalid data"})
-        except Exception as e:
-            logger.error("An error occurred during login")
-            return JsonResponse({"message": "An error occurred during login"})
-
+                return JsonResponse({"message": "Invalid email or password"})
+        except ValueError as e:
+            logger.error("An error occurred during login: " + str(e))
+            return JsonResponse({"message": "An error occurred during login: " + str(e)})
 
 
 
@@ -120,10 +131,19 @@ class ChangePassword(CreateAPIView):
     def post(self, request):
         try:
             data = request.data
-            email = data['email']
-            oldpassword = data['password']
-            newpassword = data['newpassword']
+            email = data.get('email')
+            oldpassword = data.get('password')
+            newpassword = data.get('newpassword')
             
+            missing_fields = []
+            if not email:
+                missing_fields.append('email')
+            if not oldpassword:
+                missing_fields.append('password')
+            if not newpassword:
+                missing_fields.append('newpassword')
+            if missing_fields:
+                return Response({'error': f"Missing required field(s): {', '.join(missing_fields)}"}, status=status.HTTP_400_BAD_REQUEST)
             try:
                 user_obj = USER_details.objects.get(email=email)
             except USER_details.DoesNotExist:
@@ -158,6 +178,11 @@ class ForgotPassword(APIView):
         try:
             data = request.data
             email = data["email"]
+            missing_fields=[]
+            if not email:
+                missing_fields.append('email')
+            if missing_fields:
+                return Response({'error': f"Missing required field(s): {', '.join(missing_fields)}"}, status=status.HTTP_400_BAD_REQUEST)
             try:
                 user_obj = USER_details.objects.get(email=email)
             except USER_details.DoesNotExist:
