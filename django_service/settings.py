@@ -188,34 +188,103 @@ AUTH_PASSWORD_VALIDATORS = [
 
 
 
+# LOGGING = {
+#     'version': 1,
+#     'disable_existing_loggers': False,
+#     'formatters': {
+#         'simpleRe': {
+#             'format': '%(levelname)s %(asctime)s %(message)s  %(module)s  %(thread)d %(pathname)s',
+#             'datefmt': '%Y-%m-%d %H:%M:%S',
+#         },
+
+#     },
+#     'handlers': {
+#         'file1': {
+#             'level': 'INFO',
+#             'class': 'logging.FileHandler',
+#             'filename': './logs/info.log',
+#             'formatter': 'simpleRe',
+#             'delay': True,  # Add this line to delay file creation
+#         }, 
+#     },
+#     'loggers':{
+#         'django':{
+#             'handlers':['file1'],
+#             'level':'DEBUG'
+
+#         }    
+#     },
+
+# }
+
+
+
+
+
+
+
+
+
+LOG_LEVEL = JSON_SETTINGS.get('LOG_LEVEL')
+LOG_FILE = './logs/info.log'
+
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
     'formatters': {
+        'verbose': {
+            'format': 'V1.0.0 %(levelname)s %(asctime)s %(process)d %(thread)d %(name)s:%(lineno)s:%(funcName)s %(message)s'
+        },
+        'simple': {
+            'format': '%(levelname)s %(asctime)s %(message)s'
+        },
         'simpleRe': {
             'format': '%(levelname)s %(asctime)s %(message)s  %(module)s  %(thread)d %(pathname)s',
             'datefmt': '%Y-%m-%d %H:%M:%S',
         },
-
+    },
+    'filters': {
+        'require_debug_false': {
+            '()': 'django.utils.log.RequireDebugFalse'
+        }
     },
     'handlers': {
-        'file1': {
+        'console': {
+            'level': LOG_LEVEL,
+            'class': 'logging.StreamHandler',
+            'formatter': 'verbose',
+        },
+        'file': {
             'level': 'INFO',
             'class': 'logging.FileHandler',
-            'filename': './logs/info.log',
+            'filename': LOG_FILE,
             'formatter': 'simpleRe',
-            'delay': True,  # Add this line to delay file creation
-        }, 
+        },
     },
-    'loggers':{
-        'django':{
-            'handlers':['file1'],
-            'level':'DEBUG'
-
-        }    
-    },
-
+    'loggers': {
+        'django.request': {
+            'handlers': ['console', 'file'],
+            'level': 'ERROR',
+            'propagate': False,
+        },
+        'django_service': {
+            'handlers': ['console', 'file'],
+            'level': LOG_LEVEL,
+            'propagate': False,
+        },
+        'custom_logger': {
+            'handlers': ['console', 'file'],
+            'level': LOG_LEVEL,
+            'propagate': False,
+        },
+    }
 }
+
+
+
+
+
+
 
 
 

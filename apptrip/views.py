@@ -25,13 +25,15 @@ database = db['spent_amount']
 coll = db['average_amount']
 
 
-
-logger = logging.getLogger('django')
+logger = logging.getLogger('custom_logger')
+# logger = logging.getLogger('django')
 # logger = logging.getLogger("django_service.service.views")
 
 from django.core.mail import EmailMessage
 
 
+from django.core.mail import EmailMessage
+import uuid
 
 class Create_Travel(APIView):
     permission_classes = [CustomIsauthenticated]
@@ -53,17 +55,7 @@ class Create_Travel(APIView):
 
             # Send email to all email addresses
             email_addresses = request.data.get('email', [])
-            subject = "Hi all"  # Specify the subject of the email
-            message = "Shall we go for a trip?"  # Specify the body of the email
-
-            for email_address in email_addresses:
-                email = EmailMessage(
-                    subject=subject,
-                    body=message,
-                    from_email='BUILDYOURTRIP<abhisheksuda123@gmail.com>',
-                    to=[email_address],
-                )
-                email.send()
+            self.send_emails(email_addresses)
 
             response_data = {
                 "Message": "Post Data Successfully",
@@ -76,6 +68,20 @@ class Create_Travel(APIView):
         except Exception as e:
             logger.critical("Error occurred while creating travel.")
             return Response("An error occurred.", status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    def send_emails(self, email_addresses):
+        subject = "Hi all"  
+        message = "Shall we go for a trip?"
+
+        for email_address in email_addresses:
+            email = EmailMessage(
+                subject=subject,
+                body=message,
+                from_email='BUILDYOURTRIP<abhisheksuda123@gmail.com>',
+                to=[email_address],
+            )
+            email.send()
+
 
 class CompleteTrip(APIView):
     def post(self, request):
@@ -297,7 +303,7 @@ class TotalExpensesAPI(APIView):
 
             response_data = {
                 'trip_id': trip_id,
-                'expenses_id': str(expenses_id),  # Convert ObjectId to string
+                'expenses_id': str(expenses_id), 
                 'total_expenses_details': [
                     {
                         'total_budget': total_budget,
@@ -311,26 +317,7 @@ class TotalExpensesAPI(APIView):
             response_data_json = json.loads(json.dumps(response_data, default=str))
             coll.insert_one(response_data_json)
 
-            for email in expense_data['trip_emails']:
-                mail_content = f'''
-                <h2>Expense Details for Trip ID: {trip_id}</h2>
-                <p>Total Budget: {total_budget}</p>
-                <p>Total Average: {total_average}</p>
-                <p>Total Contributions by {email}: {total_contributions[f'total_{email}_contributed']}</p>
-                <p>Total Difference for {email}: {total_differences[f'total_{email}_difference']}</p>
-                '''
-
-                message = MIMEMultipart()
-                message['From'] = 'BUILDYOURTRIP<abhisheksuda123@gmail.com>'
-                message['To'] = email
-                message['Subject'] = 'Expense Details'
-
-                message.attach(MIMEText(mail_content, 'html'))
-
-                with smtplib.SMTP('smtp.gmail.com', 587) as server:
-                    server.starttls()
-                    server.login('abhisheksuda123@gmail.com', 'eduq yzha uota wayx')
-                    server.send_message(message)
+            self.send_email(expense_data['trip_emails'], trip_id, total_budget, total_average, total_contributions, total_differences)
 
             logger.info("Successfully POST")
 
@@ -340,6 +327,28 @@ class TotalExpensesAPI(APIView):
             logger.error(f"An error occurred: {str(e)}")
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+    def send_email(self, emails, trip_id, total_budget, total_average, total_contributions, total_differences):
+        for email in emails:
+            mail_content = f'''
+            <h2>Expense Details for Trip ID: {trip_id}</h2>
+            <p>Total Budget: {total_budget}</p>
+            <p>Total Average: {total_average}</p>
+            <p>Total Contributions by {email}: {total_contributions[f'total_{email}_contributed']}</p>
+            <p>Total Difference for {email}: {total_differences[f'total_{email}_difference']}</p>
+            '''
+
+            message = MIMEMultipart()
+            message['From'] = 'BUILDYOURTRIP<abhisheksuda123@gmail.com>'
+            message['To'] = email
+            message['Subject'] = 'Expense Details'
+
+            message.attach(MIMEText(mail_content, 'html'))
+
+            with smtplib.SMTP('smtp.gmail.com', 587) as server:
+                server.starttls()
+                server.login('abhisheksuda123@gmail.com', 'eduq yzha uota wayx')
+                server.send_message(message)
+
 
 
 
@@ -348,7 +357,6 @@ class LastExpenseDetailsAPI(APIView):
         try:
           
             expense_data = coll.find_one({'trip_id': trip_id}, sort=[('_id', -1)])
-
             if not expense_data:
                 return Response({'error': 'Expense details not found for the given trip_id'}, status=status.HTTP_404_NOT_FOUND)
 
