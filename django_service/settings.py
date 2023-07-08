@@ -11,7 +11,7 @@ https://docs.djangoproject.com/en/3.0/ref/settings/
 """
 
 import os
-import datetime
+
 import json
 
 
@@ -104,7 +104,7 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'django_service.wsgi.application'
 
-1
+
 # Database
 # https://docs.djangoproject.com/en/3.0/ref/settings/#databases
 
@@ -262,16 +262,6 @@ LOGGING = {
         },
     },
     'loggers': {
-        'django.request': {
-            'handlers': ['console', 'file'],
-            'level': 'ERROR',
-            'propagate': False,
-        },
-        'django_service': {
-            'handlers': ['console', 'file'],
-            'level': LOG_LEVEL,
-            'propagate': False,
-        },
         'custom_logger': {
             'handlers': ['console', 'file'],
             'level': LOG_LEVEL,
