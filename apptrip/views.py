@@ -47,8 +47,8 @@ class Create_Travel(APIView):
 
             
             login_data = {
-                'email': '<email>',  # Replace <email> with the actual email
-                'password': '<password>'  # Replace <password> with the actual password
+                'email': '<email>',  
+                'password': '<password>'  
             }
             login_response = self.client.post('/login/', data=login_data)
             if login_response.status_code == 200:
