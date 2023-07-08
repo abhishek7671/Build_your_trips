@@ -29,11 +29,6 @@ logger = logging.getLogger('custom_logger')
 # logger = logging.getLogger('django')
 # logger = logging.getLogger("django_service.service.views")
 
-from django.core.mail import EmailMessage
-
-
-from django.core.mail import EmailMessage
-import uuid
 
 class Create_Travel(APIView):
     permission_classes = [CustomIsauthenticated]
@@ -51,10 +46,22 @@ class Create_Travel(APIView):
                 logger.error("Invalid serializer data")
                 return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+            
+            login_data = {
+                'email': '<email>',  # Replace <email> with the actual email
+                'password': '<password>'  # Replace <password> with the actual password
+            }
+            login_response = self.client.post('/login/', data=login_data)
+            if login_response.status_code == 200:
+                user_email = login_data['email']
+            else:
+                logger.error("Failed to authenticate user")
+                return Response("Failed to authenticate user", status=status.HTTP_401_UNAUTHORIZED)
+
             serializer.save()
 
             # Send email to all email addresses
-            email_addresses = request.data.get('email', [])
+            email_addresses = [user_email] + request.data.get('email', [])  # Add the user's email to the list
             self.send_emails(email_addresses)
 
             response_data = {
@@ -81,6 +88,7 @@ class Create_Travel(APIView):
                 to=[email_address],
             )
             email.send()
+
 
 
 class CompleteTrip(APIView):
