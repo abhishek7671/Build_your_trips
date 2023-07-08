@@ -26,8 +26,7 @@ coll = db['average_amount']
 
 
 logger = logging.getLogger('custom_logger')
-# logger = logging.getLogger('django')
-# logger = logging.getLogger("django_service.service.views")
+
 
 
 class Create_Travel(APIView):
@@ -60,8 +59,8 @@ class Create_Travel(APIView):
 
             serializer.save()
 
-            # Send email to all email addresses
-            email_addresses = [user_email] + request.data.get('email', [])  # Add the user's email to the list
+           
+            email_addresses = [user_email] + request.data.get('email', []) 
             self.send_emails(email_addresses)
 
             response_data = {
