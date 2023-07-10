@@ -1,14 +1,14 @@
 from rest_framework import serializers
-from .models import PastTravelledTrips, FutureTrips
+from .models import FutureTrips
 
 
 
-class Pserializer(serializers.ModelSerializer):
+# class Pserializer(serializers.ModelSerializer):
     
-    class Meta:
-        model = PastTravelledTrips
-        fields = ["trip_name","start_date","end_date","days","email","budget","address","location","date_info","trip_id","user_id"]
-        # fields = '__all__'
+#     class Meta:
+#         model = PastTravelledTrips
+#         fields = ["trip_name","start_date","end_date","days","email","budget","address","location","date_info","trip_id","user_id"]
+#         # fields = '__all__'
    
 
 

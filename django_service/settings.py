@@ -56,7 +56,6 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework.authtoken',
     'rest_framework_jwt',
-    # 'rest_framework_jwt.blacklist',
     'drf_yasg',
     'app',
     'apptrip',
@@ -68,10 +67,11 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
-    'django.middleware.security.SecurityMiddleware',
+    
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'django.middleware.security.SecurityMiddleware',
+    'corsheaders.middleware.CorsMiddleware', 
     'django.middleware.common.CommonMiddleware',
-    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
@@ -138,93 +138,6 @@ AUTH_PASSWORD_VALIDATORS = [
 
 
 
-
-
-
-
-# LOG_LEVEL = JSON_SETTINGS.get('LOG_LEVEL')
-# LOGGING = {
-#     'version': 1,
-#     'disable_existing_loggers': False,
-#     'formatters': {
-#         'verbose': {
-#             'format': 'V1.0.0 %(levelname)s %(asctime)s %(process)d %(thread)d %(name)s:%(lineno)s:%(funcName)s %(message)s'
-#         },
-#         'simple': {
-#             'format': '%(levelname)s %(asctime)s %(message)s'
-#         },
-#     },
-#     'filters': {
-#         'require_debug_false': {
-#             '()': 'django.utils.log.RequireDebugFalse'
-#         }
-#     },
-#     'handlers': {
-#         'mail_admins': {
-#             'level': 'ERROR',
-#             'filters': ['require_debug_false'],
-#             'class': 'django.utils.log.AdminEmailHandler'
-#         },
-#         'console': {
-#             'level': LOG_LEVEL,
-#             'class': 'logging.StreamHandler',
-#             'formatter': 'verbose',
-#         },
-#     },
-#     'loggers': {
-#         'django.request': {
-#             'handlers': ['mail_admins'],
-#             'level': 'ERROR',
-#             'propagate': False,
-#         },
-#         'django_service': {
-#             'handlers': ['console'],
-#             'level': LOG_LEVEL,
-#             'propagate': False,
-#         },
-#     }
-# }
-
-
-
-
-# LOGGING = {
-#     'version': 1,
-#     'disable_existing_loggers': False,
-#     'formatters': {
-#         'simpleRe': {
-#             'format': '%(levelname)s %(asctime)s %(message)s  %(module)s  %(thread)d %(pathname)s',
-#             'datefmt': '%Y-%m-%d %H:%M:%S',
-#         },
-
-#     },
-#     'handlers': {
-#         'file1': {
-#             'level': 'INFO',
-#             'class': 'logging.FileHandler',
-#             'filename': './logs/info.log',
-#             'formatter': 'simpleRe',
-#             'delay': True,  # Add this line to delay file creation
-#         }, 
-#     },
-#     'loggers':{
-#         'django':{
-#             'handlers':['file1'],
-#             'level':'DEBUG'
-
-#         }    
-#     },
-
-# }
-
-
-
-
-
-
-
-
-
 LOG_LEVEL = JSON_SETTINGS.get('LOG_LEVEL')
 LOG_FILE = './logs/info.log'
 
@@ -272,14 +185,6 @@ LOGGING = {
 
 
 
-
-
-
-
-
-
-
-
 # Internationalization
 # https://docs.djangoproject.com/en/3.0/topics/i18n/
 
@@ -316,9 +221,33 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 MEDIA_URL = '/media/'
 
 
+CORS_ORIGIN_ALLOW_ALL = False 
+CORS_ORIGIN_WHITELIST = [
+    'http://example.com',  
+    'https://example.com',
+]
 
-CORS_ORIGIN_ALLOW_ALL = True
-CORS_ALLOW_CREDENTIALS = True
+
+CORS_ALLOW_METHODS = [
+    'GET',
+    'POST',
+    'PUT',
+    'PATCH',
+    'DELETE',
+    'OPTIONS',
+]
+CORS_ALLOW_HEADERS = [
+    'accept',
+    'accept-encoding',
+    'authorization',
+    'content-type',
+    'dnt',
+    'origin',
+    'user-agent',
+    'x-csrftoken',
+    'x-requested-with',
+]
+
 
 
 
