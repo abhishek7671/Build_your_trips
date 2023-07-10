@@ -27,6 +27,7 @@ coll = db['average_amount']
 
 logger = logging.getLogger('custom_logger')
 
+
 class Create_Travel(APIView):
     permission_classes = [CustomIsauthenticated]
     authentication_classes = [JWTAuthentication]
@@ -36,7 +37,8 @@ class Create_Travel(APIView):
         try:
             user_ids = str(request.user._id)
             trip_id = str(uuid.uuid4())
-            request.data.update({'user_id': user_ids, 'trip_id': trip_id})
+            email = request.data.get('email', None)  # Retrieve the email from the request data
+            request.data.update({'user_id': user_ids, 'trip_id': trip_id, 'email': email})  # Include the email in the request data
             serializer = FSerializer(data=request.data)
 
             if not serializer.is_valid():
@@ -73,6 +75,10 @@ class Create_Travel(APIView):
                 to=[email_address],
             )
             email.send()
+
+
+
+
 
 
 
@@ -147,6 +153,8 @@ class Future(APIView):
             return Response({"error": "An error occurred."}, status=500)
 
 
+
+
 class Future_User_id(APIView):
     def get(self, request, user_id, format=None):
         try:
@@ -159,7 +167,6 @@ class Future_User_id(APIView):
         except Exception as e:
             logger.error("An error occurred for user_id")
             return Response({"Message": "An error occurred."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
 
 
 
