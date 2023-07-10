@@ -15,7 +15,9 @@ urlpatterns = [
     path('createtrip',views.Create_Travel.as_view()),
     path('CompleteTrip',views.CompleteTrip.as_view()),
    
-    path('futureuser/<str:user_id>/',views.Future_User_id.as_view()),
+    # path('futureuser/<str:user_id>/',views.Future_User_id.as_view()),
+
+    path('futureuser/<str:email>/',views.GetTripDetails.as_view()),
     path('future/<str:user_id>/<str:trip_id>/',views.Future.as_view()),
     
 

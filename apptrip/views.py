@@ -28,6 +28,7 @@ coll = db['average_amount']
 logger = logging.getLogger('custom_logger')
 
 
+
 class Create_Travel(APIView):
     permission_classes = [CustomIsauthenticated]
     authentication_classes = [JWTAuthentication]
@@ -35,10 +36,10 @@ class Create_Travel(APIView):
     @method_decorator(token_required)
     def post(self, request, format=None):
         try:
-            user_ids = str(request.user._id)
+            user_id = str(request.user._id)
             trip_id = str(uuid.uuid4())
             email = request.data.get('email', None)  # Retrieve the email from the request data
-            request.data.update({'user_id': user_ids, 'trip_id': trip_id, 'email': email})  # Include the email in the request data
+            request.data.update({'user_id': user_id, 'trip_id': trip_id, 'email': email})  # Include the email in the request data
             serializer = FSerializer(data=request.data)
 
             if not serializer.is_valid():
@@ -54,7 +55,8 @@ class Create_Travel(APIView):
             response_data = {
                 "Message": "Post Data Successfully",
                 "trip_id": trip_id,
-                "user_id": user_ids,
+                "user_id": user_id,
+                "email": email,
                 "Created_Data": serializer.data['date_info']
             }
             logger.info('Success')
@@ -64,7 +66,7 @@ class Create_Travel(APIView):
             return Response("An error occurred.", status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     def send_emails(self, email_addresses):
-        subject = "Hi all"  
+        subject = "Hi all"
         message = "Shall we go for a trip?"
 
         for email_address in email_addresses:
@@ -75,7 +77,6 @@ class Create_Travel(APIView):
                 to=[email_address],
             )
             email.send()
-
 
 
 
@@ -153,20 +154,47 @@ class Future(APIView):
             return Response({"error": "An error occurred."}, status=500)
 
 
+# class Future_User_id(APIView):
+#     def get(self, request, user_id, format=None):
+#         try:
+#             user_objs = FutureTrips.objects.filter(user_id=user_id)
+#             serializer = FSerializer(user_objs, many=True)
+#             data = serializer.data
+#             logger.info("Data Retrieve user_id")
+
+#             return Response(data, status=status.HTTP_200_OK)
+#         except Exception as e:
+#             logger.error("An error occurred for user_id")
+#             return Response({"Message": "An error occurred."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
-class Future_User_id(APIView):
-    def get(self, request, user_id, format=None):
+
+class GetTripDetails(APIView):
+    def get(self, request, email):
         try:
-            user_objs = FutureTrips.objects.filter(user_id=user_id)
-            serializer = FSerializer(user_objs, many=True)
-            data = serializer.data
-            logger.info("Data Retrieve user_id")
+            trips = FutureTrips.objects.filter(email__icontains=email)
+            trip_details = []
+            for trip in trips:
+                trip_details.append({
+                    "trip_id": str(trip.trip_id),
+                    "trip_name": trip.trip_name,
+                    "start_date": trip.start_date.strftime("%Y-%m-%d"),
+                    "end_date": trip.end_date.strftime("%Y-%m-%d"),
+                    "email": trip.email,
+                    "budget": str(trip.budget),
+                    "address": trip.address,
+                    "location": trip.location,
+                    "user_id": str(trip.user_id),
+                })
 
-            return Response(data, status=status.HTTP_200_OK)
+            response_data = {
+                "email": email,
+                "trips": trip_details,
+                "count": len(trip_details)
+            }
+            return Response(response_data)
         except Exception as e:
-            logger.error("An error occurred for user_id")
-            return Response({"Message": "An error occurred."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response("An error occurred.", status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 
