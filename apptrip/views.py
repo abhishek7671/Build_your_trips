@@ -27,8 +27,6 @@ coll = db['average_amount']
 
 logger = logging.getLogger('custom_logger')
 
-
-
 class Create_Travel(APIView):
     permission_classes = [CustomIsauthenticated]
     authentication_classes = [JWTAuthentication]
@@ -45,22 +43,10 @@ class Create_Travel(APIView):
                 logger.error("Invalid serializer data")
                 return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-            
-            login_data = {
-                'email': '<email>',  
-                'password': '<password>'  
-            }
-            login_response = self.client.post('/login/', data=login_data)
-            if login_response.status_code == 200:
-                user_email = login_data['email']
-            else:
-                logger.error("Failed to authenticate user")
-                return Response("Failed to authenticate user", status=status.HTTP_401_UNAUTHORIZED)
-
             serializer.save()
 
-           
-            email_addresses = [user_email] + request.data.get('email', []) 
+            # Send email to all email addresses
+            email_addresses = request.data.get('email', [])
             self.send_emails(email_addresses)
 
             response_data = {
@@ -159,7 +145,6 @@ class Future(APIView):
         except Exception as e:
             logger.exception('An error occurred')
             return Response({"error": "An error occurred."}, status=500)
-
 
 
 class Future_User_id(APIView):

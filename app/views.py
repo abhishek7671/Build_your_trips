@@ -79,7 +79,6 @@ class Register(APIView):
             logger.error('Internal server error: %s', str(e))
             return JsonResponse({'Message': 'Internal server error'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-
 class LoginView(APIView):
     def post(self, request):
         try:
@@ -117,6 +116,7 @@ class LoginView(APIView):
         except ValueError as e:
             logger.error("An error occurred during login: " + str(e))
             return JsonResponse({"message": "An error occurred during login: " + str(e)})
+
 
 
 
