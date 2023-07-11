@@ -109,9 +109,9 @@ class Future(APIView):
     permission_classes = [CustomIsauthenticated]
 
     @method_decorator(token_required)
-    def get(self, request, user_id, trip_id):
+    def get(self, request, trip_id):
         try:
-            user = collection.find_one({'user_id': str(user_id), 'trip_id': str(trip_id)})
+            user = collection.find_one({'trip_id': str(trip_id)})
             if not user:
                 raise NotFound('Trip not found.')
 
@@ -129,7 +129,7 @@ class Future(APIView):
             }
 
             mycol = db['apptrip_futuretrips']
-            user2 = mycol.find_one({'user_id': str(user_id), 'trip_id': str(trip_id)})
+            user2 = mycol.find_one({'trip_id': str(trip_id)})
 
             trip_details = [{
                 "day": detail["day"],
@@ -152,9 +152,6 @@ class Future(APIView):
 
 
 class Future_User_id(APIView):
-    permission_classes = [CustomIsauthenticated]
-
-    @method_decorator(token_required)
     def get(self, request, user_id, format=None):
         try:
             user_objs = FutureTrips.objects.filter(user_id=user_id)
@@ -170,9 +167,6 @@ class Future_User_id(APIView):
 
 
 class GetTripDetails(APIView):
-    permission_classes = [CustomIsauthenticated]
-
-    @method_decorator(token_required)
     def get(self, request, email):
         try:
             trips = FutureTrips.objects.filter(email__icontains=email)
@@ -190,6 +184,7 @@ class GetTripDetails(APIView):
                     "location": trip.location,
                     "user_id": str(trip.user_id),
                 })
+                
 
             response_data = {
                 "email": email,
