@@ -56,7 +56,7 @@ class Create_Travel(APIView):
                 "user_id": user_ids,
                 "Created_Data": serializer.data['date_info']
             }
-            logger.info('Success')
+            logger.info('Post Data Successfully')
             return Response(response_data, status=status.HTTP_200_OK)
         except Exception as e:
             logger.critical("Error occurred while creating travel.")
@@ -95,7 +95,7 @@ class CompleteTrip(APIView):
                 {"trip_id": trip_id},
                 {"$set": {"trip_details": trip_details}},
             )
-            logger.info('Done')
+            logger.info('Completely Fill The Trip Details')
             return Response('success')
 
         except Exception as e:
@@ -143,7 +143,7 @@ class Future(APIView):
                 'trip_details': trip_details
             }
 
-            logger.info('Data retrieved successfully')
+            logger.info('Data Retrieved Successfully Based on Trip_id')
             return Response({"message": "Data retrieved successfully", "user": trip_data, **response}, status=200)
 
         except Exception as e:
@@ -157,7 +157,7 @@ class Future_User_id(APIView):
             user_objs = FutureTrips.objects.filter(user_id=user_id)
             serializer = FSerializer(user_objs, many=True)
             data = serializer.data
-            logger.info("Data Retrieve user_id")
+            logger.info("Data Retrieved Based on User_id")
 
             return Response(data, status=status.HTTP_200_OK)
         except Exception as e:
@@ -184,13 +184,12 @@ class GetTripDetails(APIView):
                     "location": trip.location,
                     "user_id": str(trip.user_id),
                 })
-                
-
             response_data = {
                 "email": email,
                 "trips": trip_details,
                 "count": len(trip_details)
             }
+            logger.info("Data Retrieved Successfully Based on Email")
             return Response(response_data, status=status.HTTP_200_OK)
         except Exception as e:
             return Response("An error occurred.", status=status.HTTP_500_INTERNAL_SERVER_ERROR)
@@ -233,7 +232,7 @@ class PostcallAPI(APIView):
                         '$push': {'expenses_details': {'$each': data['expenses_details']}},
                     }
                 )
-                logger.info('Data successfully updated in the database')
+                logger.info('Data Successfully Updated in the Database')
                 return Response('success')
             else:
                 database.insert_one(request_data)
@@ -279,7 +278,7 @@ class GetExpenseAPI(APIView):
             result = database.find_one({'trip_id': trip_id, 'expense_id': expense_id})
             if result:
                 result['_id'] = str(result['_id'])
-                logger.info("Retrieve the Data based on id's ")
+                logger.info("Retrieve the Data Based on Trip_id and Expense_id ")
                 return Response(result)
             else:
                 logger.warning("GetExpenseAPI - Expense not found.")
@@ -388,7 +387,7 @@ class LastExpenseDetailsAPI(APIView):
 
             total_expenses_details = expense_data['total_expenses_details']
             last_expense_details = total_expenses_details[-1]
-            logger.info('Retrieve the Latest data Successfully')
+            logger.info('Retrieve the Latest Data Successfully')
             return Response(last_expense_details)
 
         except Exception as e:
