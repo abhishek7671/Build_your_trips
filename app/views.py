@@ -22,8 +22,7 @@ tokens=mydb['tokens']
 
 import logging
 logger = logging.getLogger('custom_logger')
-# logger = logging.getLogger('django')
-# logger = logging.getLogger("django_service.service.views")
+
 
 
 

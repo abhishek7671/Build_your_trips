@@ -4,14 +4,8 @@ from . import views
 
 urlpatterns = [
 
-    
-    # path(r'pasttrip',views.Ptrip.as_view()),
-    # path(r'pastcompletetrip',views.pasttrip.as_view()),
-    # path(r'past/<str:user_id>/<str:trip_id>/', views.Past.as_view()),
-    # path(r'pastuser/<str:user_id>',views.Past_User_id.as_view()),
-    
 
-
+    
     path('createtrip',views.Create_Travel.as_view()),
     path('CompleteTrip',views.CompleteTrip.as_view()),
    
