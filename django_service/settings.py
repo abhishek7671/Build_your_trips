@@ -47,7 +47,7 @@ CORS_ALLOW_CREDENTIALS = True
 # Application definition
 
 INSTALLED_APPS = [
-    'django.contrib.admin',
+    'django.contrib.admin', 
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
@@ -89,7 +89,7 @@ ROOT_URLCONF = 'django_service.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [r'D:\python-boilerplate-code-develop1\build_your_trip_BE\templates'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [

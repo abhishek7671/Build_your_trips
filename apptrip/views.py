@@ -26,7 +26,11 @@ coll = db['average_amount']
 
 
 logger = logging.getLogger('custom_logger')
-
+from django.core.mail import send_mail
+from django.template.loader import render_to_string
+from django.utils.html import strip_tags
+from django.core.exceptions import ValidationError
+from email.utils import formataddr
 
 class Create_Travel(APIView):
     permission_classes = [CustomIsauthenticated]
@@ -46,9 +50,16 @@ class Create_Travel(APIView):
 
             serializer.save()
 
-            # Send email to all email addresses
+
             email_addresses = request.data.get('email', [])
-            self.send_emails(email_addresses)
+            trip_data = {
+                'address': request.data.get('address', ''),
+                'start_date': request.data.get('start_date', ''),
+                'end_date': request.data.get('end_date', ''),
+                'trip_name': request.data.get('trip_name', ''),
+                'email': request.data.get('email', []),
+            }
+            self.send_emails(email_addresses, trip_data)
 
             response_data = {
                 "Message": "Post Data Successfully",
@@ -62,18 +73,24 @@ class Create_Travel(APIView):
             logger.critical("Error occurred while creating travel.")
             return Response("An error occurred.", status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-    def send_emails(self, email_addresses):
-        subject = "Hi all"  
-        message = "Shall we go for a trip?"
+    def send_emails(self, email_addresses, trip_data):
+        subject = 'Successfully Created A Trip'
+        sender_name = 'Build Your Trips'
+        sender_email = 'abhisheksuda123@example.com'
+        template_name = 'index.html'
 
-        for email_address in email_addresses:
-            email = EmailMessage(
-                subject=subject,
-                body=message,
-                from_email='BUILDYOURTRIP<abhisheksuda123@gmail.com>',
-                to=[email_address],
-            )
-            email.send()
+        for email in email_addresses:
+            try:
+                
+                html_message = render_to_string(template_name, trip_data)
+                plain_message = strip_tags(html_message)
+                formatted_sender = formataddr((sender_name, sender_email))
+
+                send_mail(subject, plain_message, formatted_sender, [email], html_message=html_message)
+            except ValidationError:
+                logger.error(f"Invalid email address: {email}")
+            except Exception as e:
+                logger.error(f"Error sending email to {email}: {str(e)}")
 
 
 
@@ -292,8 +309,6 @@ class GetExpenseAPI(APIView):
 
 
 
-
-
 class TotalExpensesAPI(APIView):
     permission_classes = [CustomIsauthenticated]
 
@@ -308,27 +323,30 @@ class TotalExpensesAPI(APIView):
 
             missing_fields = [field for field in ['trip_id', 'expenses_id'] if not data.get(field)]
             if missing_fields:
-                return Response({'error': f"Missing required field(s): {', '.join(missing_fields)}"}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({'error': f"Missing required field(s): {', '.join(missing_fields)}"},
+                                status=status.HTTP_400_BAD_REQUEST)
 
             # Calculate total budget and contributions
             total_budget = sum(float(expense['amount']) for expense in expenses_details)
             total_contributions = {
-                f'total_{email}_contributed': sum(float(expense['amount']) for expense in expenses_details if expense['email'] == email)
+                f'total_{email}_contributed': round(sum(float(expense['amount']) for expense in expenses_details if
+                                                   expense['email'] == email))
                 for email in expense_data['trip_emails']
             }
 
             # Calculate differences
             total_differences = {
-                f'total_{email}_difference': total_contributions[f'total_{email}_contributed'] - (total_budget / len(expense_data['trip_emails']))
+                f'total_{email}_difference': round(total_contributions[f'total_{email}_contributed'] - (
+                            total_budget / len(expense_data['trip_emails'])))
                 for email in expense_data['trip_emails']
             }
 
             # Calculate total average
-            total_average = total_budget / len(expense_data['trip_emails'])
+            total_average = round(total_budget / len(expense_data['trip_emails']))
 
             response_data = {
                 'trip_id': trip_id,
-                'expenses_id': str(expenses_id), 
+                'expenses_id': str(expenses_id),
                 'total_expenses_details': [
                     {
                         'total_budget': total_budget,
@@ -342,7 +360,8 @@ class TotalExpensesAPI(APIView):
             response_data_json = json.loads(json.dumps(response_data, default=str))
             coll.insert_one(response_data_json)
 
-            self.send_email(expense_data['trip_emails'], trip_id, total_budget, total_average, total_contributions, total_differences)
+            self.send_email(expense_data['trip_emails'], total_budget, total_average, total_contributions,
+                            total_differences)
 
             logger.info("Successfully POST")
 
@@ -352,27 +371,29 @@ class TotalExpensesAPI(APIView):
             logger.error(f"An error occurred: {str(e)}")
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-    def send_email(self, emails, trip_id, total_budget, total_average, total_contributions, total_differences):
-        for email in emails:
-            mail_content = f'''
-            <h2>Expense Details for Trip ID: {trip_id}</h2>
-            <p>Total Budget: {total_budget}</p>
-            <p>Total Average: {total_average}</p>
-            <p>Total Contributions by {email}: {total_contributions[f'total_{email}_contributed']}</p>
-            <p>Total Difference for {email}: {total_differences[f'total_{email}_difference']}</p>
-            '''
+    def send_email(self, email_addresses, total_budget, total_average, total_contributions, total_differences):
+        subject = 'Trip Budget Spents'
+        sender_name = 'Build Your Trips'
+        sender_email = 'abhisheksuda123@example.com'
+        template_name = 'details.html'
 
-            message = MIMEMultipart()
-            message['From'] = 'BUILDYOURTRIP<abhisheksuda123@gmail.com>'
-            message['To'] = email
-            message['Subject'] = 'Expense Details'
+        for email in email_addresses:
+            try:
+                email_data = {
+                    'total_budget': total_budget,
+                    'total_average': total_average,
+                    'total_contributions': total_contributions,
+                    'total_differences': total_differences
+                }
+                html_message = render_to_string(template_name, email_data)
+                plain_message = strip_tags(html_message)
+                formatted_sender = formataddr((sender_name, sender_email))
 
-            message.attach(MIMEText(mail_content, 'html'))
-
-            with smtplib.SMTP('smtp.gmail.com', 587) as server:
-                server.starttls()
-                server.login('abhisheksuda123@gmail.com', 'eduq yzha uota wayx')
-                server.send_message(message)
+                send_mail(subject, plain_message, formatted_sender, [email], html_message=html_message)
+            except ValidationError:
+                logger.error(f"Invalid email address: {email}")
+            except Exception as e:
+                logger.error(f"Error sending email to {email}: {str(e)}")
 
 
 
