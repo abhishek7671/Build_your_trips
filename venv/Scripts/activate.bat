@@ -8,7 +8,7 @@ if defined _OLD_CODEPAGE (
     "%SystemRoot%\System32\chcp.com" 65001 > nul
 )
 
-set VIRTUAL_ENV=D:\python-boilerplate-code-develop1\build_your_trip_BE\venv
+set VIRTUAL_ENV=D:\django_trips poc\build_your_trip_BE (7)\build_your_trip_BE\venv
 
 if not defined PROMPT set PROMPT=$P$G
 
